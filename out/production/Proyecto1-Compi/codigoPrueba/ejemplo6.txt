@@ -1,0 +1,22 @@
+_verano_
+bromista _funcion2_ abreregalo rodolfo _a_ , rodolfo _b_ , cupido _c_ cierraregalo
+    abrecuento
+
+# Declaración de variables correctas e incorrectas
+rodolfo _numero_ entrega 42 finregalo  
+bromista _incorrect_ entrega 3.14 finregalo
+trueno _valido_ entrega true finregalo
+
+# Estructuras de control
+elfo abreregalo _numero_ minstix 40 cierraregalo  
+    abrecuento  
+        narra abreregalo "El número es mayor que 40" cierraregalo finregalo  
+    cierracuento  
+hada  
+    abrecuento  
+        narra abreregalo "El número no es mayor que 40" cierraregalo finregalo  
+    cierracuento  
+
+
+envia _x22_ finregalo
+ cierracuento

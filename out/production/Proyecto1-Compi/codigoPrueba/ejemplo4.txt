@@ -1,0 +1,19 @@
+_verano_
+cupido _funcion_  abreregalo cierraregalo
+
+abrecuento
+
+# Declaración de variables
+rodolfo _x_ entrega 20 finregalo  
+bromista _y_ entrega 2.5 finregalo  
+
+# Expresiones aritméticas y lógicas
+trueno _resultado_ entrega abreregalo _x_ nochebuena 2 cierraregalo minstix 10 melchor true finregalo  
+
+# Uso de operadores unarios
+_x_ entrega _x_ quien finregalo  
+_y_ entrega _y_ grinch finregalo  
+
+
+ envia _adios_ finregalo
+cierracuento
