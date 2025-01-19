@@ -5,7 +5,7 @@ import java.util.HashMap;
 import Tree.Arbol;
 import Tree.Nodo;
 
-action code {: :};
+action code {:  :};
 
 parser code {:
     BasicLexerCupV lex;
@@ -14,6 +14,22 @@ parser code {:
 
     private Arbol arbol;
 
+
+    public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
+                    String tipo = "null";
+                    for (String token : listaTablasSimbolos) {
+                        String[] partesToken = token.split(":");
+                        if (id.equals(partesToken[0])) {
+                            tipo = partesToken[1];
+                            break;
+                        }
+                    }
+                    if (tipo.equals("null")) {
+                        System.err.println("Error semántico: Variable " + id + " no declarada.");
+                    }
+                    System.out.println("tipo: " + tipo);
+                    return tipo;
+                }
 
     /**
      * Método: getArbol
@@ -208,7 +224,6 @@ inicio ::= MAIN:m
     | error {:
              System.err.println("Error en la estructura inicial.");
          :};
-
 
 /* Definiciones */
 tipos ::= INTEGER
@@ -778,11 +793,85 @@ operandoBinaria ::= SUMA {:RESULT="navidad";:}
                 | MODULO {:RESULT="magos";:}
                 | POTENCIA {:RESULT="adviento";:};
 
-expresionBinaria ::= numerosLiterales operandoBinaria numerosLiterales
-                    | numerosLiterales operandoBinaria
-                    | variable operandoBinaria numerosLiterales
-                    | variable operandoBinaria
-                    | variable operandoBinaria numerosLiterales operandoBinaria numerosLiterales ;
+expresionBinaria ::= numerosLiterales:e1 operandoBinaria:op numerosLiterales:e2
+                    {:
+                            String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                            String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
+
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+                            if (!tipo2.equals("rodolfo") && !tipo2.equals("bromista")) {
+                                System.err.println("Error semántico: Operando derecho no es un tipo numérico en " + op + " " + e2);
+                            }
+                            if (!tipo1.equals(tipo2)) {
+                                System.err.println("Error semántico: Tipos incompatibles entre " + e1 + " (" + tipo1 + ") y " + e2 + " (" + tipo2 + ")");
+                            }
+                            String tipoResultado = tipo1.equals("bromista") || tipo2.equals("bromista") ? "bromista" : "rodolfo";
+                            RESULT = tipoResultado;
+                        :}
+                    | numerosLiterales:e1 operandoBinaria:op
+                        {:
+                            String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+
+                            RESULT = tipo1;
+                        :}
+                    | variable:e1 operandoBinaria:op numerosLiterales:e2
+                        {:
+                            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                            String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
+
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+                            if (!tipo2.equals("rodolfo") && !tipo2.equals("bromista")) {
+                                System.err.println("Error semántico: Operando derecho no es un tipo numérico en " + op + " " + e2);
+                            }
+                            if (!tipo1.equals(tipo2)) {
+                                System.err.println("Error semántico: Tipos incompatibles entre " + e1 + " (" + tipo1 + ") y " + e2 + " (" + tipo2 + ")");
+                            }
+
+                            String tipoResultado = tipo1.equals("bromista") || tipo2.equals("bromista") ? "bromista" : "rodolfo";
+
+                            RESULT = tipoResultado;
+                        :}
+                    | variable:e1 operandoBinaria:op
+                        {:
+                            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+
+                            RESULT = tipo1;
+                        :}
+                    | variable:e1 operandoBinaria:op numerosLiterales:e2 operandoBinaria:op2 numerosLiterales:e3
+                        {:
+                            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                            String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
+                            String tipo3 = (e3 instanceof String) ? e3.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e3.toString());
+
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Primer operando no es un tipo numérico en " + op + " " + e1);
+                            }
+                            if (!tipo2.equals("rodolfo") && !tipo2.equals("bromista")) {
+                                System.err.println("Error semántico: Segundo operando no es un tipo numérico en " + op + " " + e2);
+                            }
+                            if (!tipo3.equals("rodolfo") && !tipo3.equals("bromista")) {
+                                System.err.println("Error semántico: Tercer operando no es un tipo numérico en " + op2 + " " + e3);
+                            }
+                            if (!tipo1.equals(tipo2) || !tipo2.equals(tipo3)) {
+                                System.err.println("Error semántico: Tipos incompatibles en la expresión binaria compuesta.");
+                            }
+
+                            String tipoResultado = tipo1.equals("bromista") || tipo2.equals("bromista") || tipo3.equals("bromista") ? "bromista" : "rodolfo";
+
+                            RESULT = tipoResultado;
+                        :};
 
 
 operandoUnario ::= INCREMENTO {:RESULT="quien";:}

@@ -1320,6 +1320,22 @@ public class parser extends java_cup.runtime.lr_parser {
     private Arbol arbol;
 
 
+    public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
+                    String tipo = "null";
+                    for (String token : listaTablasSimbolos) {
+                        String[] partesToken = token.split(":");
+                        if (id.equals(partesToken[0])) {
+                            tipo = partesToken[1];
+                            break;
+                        }
+                    }
+                    if (tipo.equals("null")) {
+                        System.err.println("Error semántico: Variable " + id + " no declarada.");
+                    }
+                    System.out.println("tipo: " + tipo);
+                    return tipo;
+                }
+
     /**
      * Método: getArbol
      * Objetivo: Obtener el arbol.
@@ -1461,7 +1477,7 @@ public class parser extends java_cup.runtime.lr_parser {
 @SuppressWarnings({"rawtypes", "unchecked", "unused"})
 class CUP$parser$actions {
 
- 
+  
   private final parser parser;
 
   /** Constructor */
@@ -3129,7 +3145,31 @@ RESULT="entrega";
           case 113: // expresionBinaria ::= numerosLiterales operandoBinaria numerosLiterales 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                            String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                            String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
 
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+                            if (!tipo2.equals("rodolfo") && !tipo2.equals("bromista")) {
+                                System.err.println("Error semántico: Operando derecho no es un tipo numérico en " + op + " " + e2);
+                            }
+                            if (!tipo1.equals(tipo2)) {
+                                System.err.println("Error semántico: Tipos incompatibles entre " + e1 + " (" + tipo1 + ") y " + e2 + " (" + tipo2 + ")");
+                            }
+                            String tipoResultado = tipo1.equals("bromista") || tipo2.equals("bromista") ? "bromista" : "rodolfo";
+                            RESULT = tipoResultado;
+                        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresionBinaria",25, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -3138,7 +3178,21 @@ RESULT="entrega";
           case 114: // expresionBinaria ::= numerosLiterales operandoBinaria 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                            String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
 
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+
+                            RESULT = tipo1;
+                        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresionBinaria",25, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -3147,7 +3201,33 @@ RESULT="entrega";
           case 115: // expresionBinaria ::= variable operandoBinaria numerosLiterales 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                            String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
 
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+                            if (!tipo2.equals("rodolfo") && !tipo2.equals("bromista")) {
+                                System.err.println("Error semántico: Operando derecho no es un tipo numérico en " + op + " " + e2);
+                            }
+                            if (!tipo1.equals(tipo2)) {
+                                System.err.println("Error semántico: Tipos incompatibles entre " + e1 + " (" + tipo1 + ") y " + e2 + " (" + tipo2 + ")");
+                            }
+
+                            String tipoResultado = tipo1.equals("bromista") || tipo2.equals("bromista") ? "bromista" : "rodolfo";
+
+                            RESULT = tipoResultado;
+                        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresionBinaria",25, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -3156,7 +3236,21 @@ RESULT="entrega";
           case 116: // expresionBinaria ::= variable operandoBinaria 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
 
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Operando izquierdo no es un tipo numérico en " + op + " " + e1);
+                            }
+
+                            RESULT = tipo1;
+                        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresionBinaria",25, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -3165,7 +3259,43 @@ RESULT="entrega";
           case 117: // expresionBinaria ::= variable operandoBinaria numerosLiterales operandoBinaria numerosLiterales 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int op2left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int op2right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object op2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int e3left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e3right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e3 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                            String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
+                            String tipo3 = (e3 instanceof String) ? e3.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e3.toString());
 
+                            if (!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) {
+                                System.err.println("Error semántico: Primer operando no es un tipo numérico en " + op + " " + e1);
+                            }
+                            if (!tipo2.equals("rodolfo") && !tipo2.equals("bromista")) {
+                                System.err.println("Error semántico: Segundo operando no es un tipo numérico en " + op + " " + e2);
+                            }
+                            if (!tipo3.equals("rodolfo") && !tipo3.equals("bromista")) {
+                                System.err.println("Error semántico: Tercer operando no es un tipo numérico en " + op2 + " " + e3);
+                            }
+                            if (!tipo1.equals(tipo2) || !tipo2.equals(tipo3)) {
+                                System.err.println("Error semántico: Tipos incompatibles en la expresión binaria compuesta.");
+                            }
+
+                            String tipoResultado = tipo1.equals("bromista") || tipo2.equals("bromista") || tipo3.equals("bromista") ? "bromista" : "rodolfo";
+
+                            RESULT = tipoResultado;
+                        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresionBinaria",25, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
