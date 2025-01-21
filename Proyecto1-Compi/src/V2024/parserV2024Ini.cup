@@ -191,38 +191,9 @@ terminal PRINT, READ;
 terminal SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 
 /* No terminales */
-non terminal programa;
-non terminal declaracion_main;
-non terminal bloque;
-non terminal lista_sentencias;
-non terminal sentencia;
-non terminal declaracion;
-non terminal asignacion;
-non terminal expresion;
-non terminal tipo;
-non terminal literal;
-non terminal operador_binario;
-non terminal operador_unario;
-non terminal operador_logico;
-non terminal operador_relacional;
-non terminal estructura_control;
-non terminal if_stmt;
-non terminal while_stmt;
-non terminal for_stmt;
-non terminal switch_stmt;
-non terminal case_list;
-non terminal case_stmt;
-non terminal default_stmt;
-non terminal lista_expresiones;
-non terminal arreglo;
-non terminal acceso_arreglo;
-non terminal llamada_funcion;
-non terminal declaracion_funcion;
-non terminal parametros;
-non terminal lista_parametros;
-non terminal return_stmt;
-non terminal funcion;
-non terminal lista_funciones, declaracionArreglo;
+non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
+operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
+lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo;
 
 /* Precedencias */
 precedence right error;
@@ -256,13 +227,16 @@ declaracion_main ::= tipo MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
                   | tipo MAIN PARENTESISAPERTURA error PARENTESISCIERRE bloque
                   | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque;
 
-declaracion_funcion ::= tipo IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque
+declaracion_funcion ::= tipo IDENTIFICADOR PARENTESISAPERTURA PARENTESISCIERRE bloque
+                     | tipo IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque
                      | tipo IDENTIFICADOR PARENTESISAPERTURA error PARENTESISCIERRE bloque
                      | error IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque;
 
-bloque ::= corcheteIzquierdo lista_sentencias corcheteDerecho
-         | corcheteIzquierdo corcheteDerecho
+bloque ::= corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
+         | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho
          | corcheteIzquierdo error corcheteDerecho;
+
+
 
 lista_sentencias ::= lista_sentencias sentencia
                   | sentencia
@@ -273,7 +247,7 @@ sentencia ::= declaracion FIN_EXPRESION
             | estructura_control
             | expresion FIN_EXPRESION
             | BREAK FIN_EXPRESION
-            | return_stmt FIN_EXPRESION
+ //           | return_stmt FIN_EXPRESION
             | PRINT PARENTESISAPERTURA expresion PARENTESISCIERRE FIN_EXPRESION
             | READ PARENTESISAPERTURA IDENTIFICADOR PARENTESISCIERRE FIN_EXPRESION
             | error FIN_EXPRESION
@@ -325,10 +299,11 @@ asignacion ::= IDENTIFICADOR ASIGNA expresion
 expresion ::= literal
          | IDENTIFICADOR
          | llamada_funcion
-         |expresion operador_unario
+         | expresion operador_unario
          | expresion operador_binario expresion
          | expresion operador_relacional expresion
          | expresion operador_logico expresion
+         | NEGACION expresion
          | PARENTESISAPERTURA expresion PARENTESISCIERRE
          | PARENTESISAPERTURA error PARENTESISCIERRE;
 
@@ -343,9 +318,16 @@ operador_binario ::= SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO | POTENCI
 
 operador_unario ::= INCREMENTO | DECREMENTO | NEGATIVO;
 
-operador_logico ::= CONJUNCION | DISYUNCION | NEGACION;
+operador_logico ::=  CONJUNCION {:RESULT="melchor";:}
+                    | DISYUNCION {:RESULT="gaspar";:}
+                    | NEGACION {:RESULT="baltazar";:};
 
-operador_relacional ::= MENOR | MENOR_IGUAL | MAYOR | MAYOR_IGUAL | IGUAL | DIFERENTE;
+operador_relacional ::= MENOR {:RESULT="snowball";:}
+                       | MENOR_IGUAL {:RESULT="evergreen";:}
+                       | MAYOR {:RESULT="minstix";:}
+                       | MAYOR_IGUAL {:RESULT="upatree";:}
+                       | IGUAL {:RESULT="mary";:}
+                       | DIFERENTE {:RESULT="openslae";:};
 
 estructura_control ::= if_stmt
                     | while_stmt
