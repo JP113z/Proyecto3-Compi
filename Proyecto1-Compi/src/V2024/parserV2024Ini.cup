@@ -175,20 +175,9 @@ scan with {: return lex.next_token(); :};
 /* Terminales */
 terminal MAIN, INTEGER, STRING, FLOAT, BOOL, CHAR;
 terminal L_INTEGER, L_FLOAT, L_STRING, L_CHAR;
-terminal COMA, IDENTIFICADOR;
-terminal corcheteIzquierdo, corcheteDerecho;
-terminal CORCHETEAPERTURA, CORCHETECIERRE;
-terminal TRUE, FALSE;
-terminal ASIGNA;
-terminal PARENTESISAPERTURA, PARENTESISCIERRE;
-terminal INCREMENTO, DECREMENTO, NEGATIVO;
-terminal MENOR, MENOR_IGUAL, MAYOR, MAYOR_IGUAL, IGUAL, DIFERENTE;
-terminal CONJUNCION, DISYUNCION, NEGACION;
-terminal FIN_EXPRESION;
-terminal IF, ELSE, WHILE, FOR, SWITCH, CASE, DEFAULT, BREAK, RETURN;
-terminal DOS_PUNTOS;
-terminal PRINT, READ;
-terminal SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
+terminal COMA, IDENTIFICADOR, corcheteIzquierdo, corcheteDerecho, CORCHETEAPERTURA, CORCHETECIERRE, TRUE, FALSE, ASIGNA, PARENTESISAPERTURA, PARENTESISCIERRE,
+INCREMENTO, DECREMENTO, NEGATIVO, MENOR, MENOR_IGUAL, MAYOR, MAYOR_IGUAL, IGUAL, DIFERENTE, CONJUNCION, DISYUNCION, NEGACION, FIN_EXPRESION, IF, ELSE, WHILE, FOR, SWITCH, CASE, DEFAULT, BREAK, RETURN,
+DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 
 /* No terminales */
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
@@ -304,23 +293,32 @@ expresion ::= literal
          | expresion operador_relacional expresion
          | expresion operador_logico expresion
          | NEGACION expresion
-         | PARENTESISAPERTURA expresion PARENTESISCIERRE
+         | PARENTESISAPERTURA{: RESULT = "abreregalo"; :}
+          expresion
+          PARENTESISCIERRE{: RESULT = "cierraregalo"; :}
          | PARENTESISAPERTURA error PARENTESISCIERRE;
 
-literal ::= L_INTEGER
-          | L_FLOAT
-          | L_STRING
-          | L_CHAR
-          | TRUE
-          | FALSE;
+literal ::= L_INTEGER:i
+          | L_FLOAT:f
+          | L_STRING:s
+          | L_CHAR:c
+          | TRUE{:RESULT = "true";:}
+          | FALSE{:RESULT = "false";:};
 
-operador_binario ::= SUMA | RESTA | MULTIPLICACION | DIVISION | MODULO | POTENCIA;
+operador_binario ::= SUMA {:RESULT="navidad";:}
+                 | RESTA {:RESULT="intercambio";:}
+                 | DIVISION {:RESULT="reyes";:}
+                 | MULTIPLICACION {:RESULT="nochebuena";:}
+                 | MODULO {:RESULT="magos";:}
+                 | POTENCIA {:RESULT="adviento";:};
 
-operador_unario ::= INCREMENTO | DECREMENTO | NEGATIVO;
+operador_unario ::= INCREMENTO {:RESULT="quien";:}
+                  | DECREMENTO {:RESULT="grinch";:}
+                  | NEGATIVO {:RESULT="-";:};
 
 operador_logico ::=  CONJUNCION {:RESULT="melchor";:}
-                    | DISYUNCION {:RESULT="gaspar";:}
-                    | NEGACION {:RESULT="baltazar";:};
+                  | DISYUNCION {:RESULT="gaspar";:}
+                  | NEGACION {:RESULT="baltazar";:};
 
 operador_relacional ::= MENOR {:RESULT="snowball";:}
                        | MENOR_IGUAL {:RESULT="evergreen";:}
@@ -371,13 +369,16 @@ declaracionArreglo::= tipo IDENTIFICADOR acceso_arreglo
 arreglo ::=declaracionArreglo
             |arreglo declaracionArreglo ;
 
-acceso_arreglo ::=  CORCHETEAPERTURA expresion CORCHETECIERRE
+acceso_arreglo ::=  CORCHETEAPERTURA{: RESULT = "abreempaque"; :}
+                    expresion
+                    CORCHETECIERRE{: RESULT = "cierraempaque"; :}
                  | CORCHETEAPERTURA error CORCHETECIERRE;
 
 parametros ::= lista_parametros
             ;
 
-lista_parametros ::= lista_parametros COMA tipo IDENTIFICADOR
+lista_parametros ::= lista_parametros COMA{: RESULT = ","; :}
+                    tipo IDENTIFICADOR
                   | tipo IDENTIFICADOR
                   | lista_parametros error tipo IDENTIFICADOR;
 
@@ -385,7 +386,8 @@ llamada_funcion ::= IDENTIFICADOR PARENTESISAPERTURA lista_expresiones PARENTESI
                   | IDENTIFICADOR PARENTESISAPERTURA PARENTESISCIERRE
                   | IDENTIFICADOR PARENTESISAPERTURA error PARENTESISCIERRE;
 
-lista_expresiones ::= lista_expresiones COMA expresion
+lista_expresiones ::= lista_expresiones COMA{: RESULT = ","; :}
+                    expresion
                    | expresion
                    | lista_expresiones error expresion;
 
