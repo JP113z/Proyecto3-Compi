@@ -12,12 +12,12 @@
 		 rodolfo  _y_ finregalo
 		_x22_ entrega 10 finregalo
 		 cupido  _ch33_ entrega 'a' finregalo
-		 envia finregalo
+
 	 cierracuento
 	 hada   abrecuento
 		 rodolfo  _y_ finregalo #no error o no???
 		 cometa  _str2_ entrega "sdff" finregalo
-		 envia finregalo
+
 	 cierracuento
 	 duende   abreregalo _i_ entrega 0 finregalo _i_ snowball 4 navidad _j_ finregalo _i_ quien  cierraregalo  abrecuento  narra  abreregalo _i_ cierraregalo  finregalo envia finregalo cierracuento  #semantico i y j
 	 narra  abreregalo "Hola mundo" cierraregalo  finregalo
