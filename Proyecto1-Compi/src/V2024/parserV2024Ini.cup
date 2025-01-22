@@ -185,7 +185,7 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
-parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion;
+parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control;
 
 /* Precedencias */
 precedence right error;
@@ -252,15 +252,21 @@ bloque ::= corcheteIzquierdo
         return_stmt FIN_EXPRESION corcheteDerecho
         | corcheteIzquierdo error corcheteDerecho;
 
-bloqueEstructura::=corcheteIzquierdo corcheteDerecho
-                  | corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
-                  | corcheteIzquierdo lista_sentencias corcheteDerecho
-                  | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho
-                  | error;
+bloqueEstructura ::= corcheteIzquierdo
+                    {:
+                        parser.bloqueActual++;
+                    :}
+                    contenido_estructura_control
+                  | corcheteIzquierdo error corcheteDerecho;
+
+contenido_estructura_control ::= corcheteDerecho
+                             | lista_sentencias corcheteDerecho
+                             | lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
+                             | return_stmt FIN_EXPRESION corcheteDerecho;
 
 lista_sentencias ::= lista_sentencias sentencia
                   | sentencia
-                  | error {: System.err.println("Error en una setencia."); :};
+                  | error {: System.err.println("Error en una sentencia."); :};
 
 sentencia ::= declaracion FIN_EXPRESION
             | asignacion FIN_EXPRESION
