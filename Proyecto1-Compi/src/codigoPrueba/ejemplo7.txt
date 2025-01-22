@@ -1,4 +1,4 @@
- _verano_
+
  bromista _funcion1_ abreregalo rodolfo _a_ , rodolfo _b_ cierraregalo
      abrecuento
 

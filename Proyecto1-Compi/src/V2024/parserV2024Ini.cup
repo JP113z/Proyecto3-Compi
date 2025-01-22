@@ -243,12 +243,12 @@ bloque ::= corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corchete
 bloqueEstructura::=corcheteIzquierdo corcheteDerecho
                   | corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
                   | corcheteIzquierdo lista_sentencias corcheteDerecho
-                  | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho;
-
+                  | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho
+                  | error;
 
 lista_sentencias ::= lista_sentencias sentencia
                   | sentencia
-                  ;
+                  | error {: System.err.println("Error en una setencia."); :};
 
 sentencia ::= declaracion FIN_EXPRESION
             | asignacion FIN_EXPRESION
@@ -296,7 +296,8 @@ tipo ::= INTEGER
     :};
 
 asignacion ::= IDENTIFICADOR ASIGNA expresion
-    | IDENTIFICADOR ASIGNA error;
+             | IDENTIFICADOR ASIGNA error
+             | error;
 
 
 expresion ::= literal
