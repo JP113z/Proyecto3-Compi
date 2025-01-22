@@ -318,61 +318,87 @@ asignacion ::= IDENTIFICADOR ASIGNA expresion
              | error;
 
 
-expresion ::= literal:e{: RESULT = e;:}
+expresion ::= literal:e {: RESULT = e; :}
          | IDENTIFICADOR
          | llamada_funcion
-         | expresion operador_unario
+         | expresion:e1 operador_unario:op {:
+             // Validar tipos para operadores unarios
+             String tipo = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+             if (op.toString().equals("quien") || op.toString().equals("grinch")) {
+                 if (!tipo.equals("rodolfo")) {
+                     System.err.println("Error semántico: Incremento/Decremento solo aplica a enteros (rodolfo).");
+                 }
+             } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
+                 System.err.println("Error semántico: Negación solo aplica a enteros o flotantes.");
+             }
+             RESULT = tipo;
+         :}
          | expresion:e1 operador_binario:op expresion:e2
            {:
            // Obtener el tipo de ambos operandos
            String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
            String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
            // Validar los tipos de los operandos
-            if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
-                    (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
-                            System.err.println("Error semántico: Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
-            } else if (!tipo1.equals(tipo2)) {
-                System.err.println("Error semántico: Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-            }
+           if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
+               (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
+               System.err.println("Error semántico: Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
+           } else if (!tipo1.equals(tipo2)) {
+               System.err.println("Error semántico: Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+           }
            // Definir el tipo resultante
-            String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
-            RESULT = tipoResultado;
+           String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
+           RESULT = tipoResultado;
            :}
          | expresion:e1 operador_relacional:op expresion:e2
-                    {:
-                        // Los operadores relacionales siempre devuelven un booleano (trueno)
-                        String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
-                        String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
+             {:
+             // Obtener el tipo de ambos operandos
+             String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+             String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
+             // Validar los tipos de los operandos
+             if (op.toString().equals("mary") || op.toString().equals("openslae")) {
+                 // Para `mary` y `openslae`, los tipos pueden ser enteros, flotantes o booleanos
+                 if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista") && !tipo1.equals("trueno")) ||
+                     (!tipo2.equals("rodolfo") && !tipo2.equals("bromista") && !tipo2.equals("trueno"))) {
+                     System.err.println("Error semántico: Operadores '" + op + "' solo admiten enteros (rodolfo), flotantes (bromista) o booleanos (trueno).");
+                 } else if (!tipo1.equals(tipo2)) {
+                     System.err.println("Error semántico: Tipos incompatibles para operador '" + op + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                 } else {
+                     RESULT = "trueno";
+                 }
+             } else {
+                 // Validación para otros operadores relacionales
+                 if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
+                     (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
+                     System.err.println("Error semántico: Operadores '" + op + "' solo admiten enteros (rodolfo) o flotantes (bromista).");
+                 } else if (!tipo1.equals(tipo2)) {
+                     System.err.println("Error semántico: Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                 } else {
+                     RESULT = "trueno";
+                 }
+             }
+             :}
+         | expresion:e1 operador_logico:op expresion:e2
+           {:
+           // Verificar que ambos operandos sean booleanos
+           String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+           String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
 
-                        if (!tipo1.equals(tipo2)) {
-                            System.err.println("Error semántico: Tipos incompatibles para comparación relacional.");
-                        }
-                        RESULT = "trueno";
-                    :}
-                    | expresion:e1 operador_logico:op expresion:e2
-                    {:
-                        // Verificar que ambos operandos sean booleanos
-                        String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
-                        String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
-
-                        if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
-                            System.err.println("Error semántico: Operadores lógicos requieren valores booleanos (trueno).");
-                        }
-                        RESULT = "trueno";
-                    :}
+           if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
+               System.err.println("Error semántico: Operadores lógicos requieren valores booleanos (trueno).");
+           }
+           RESULT = "trueno";
+           :}
          | NEGACION expresion:e
-                    {:
-                        // Verificar que el operando sea booleano
-                        String tipo = parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
+           {:
+           // Verificar que el operando sea booleano
+           String tipo = parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
 
-                        if (!tipo.equals("trueno")) {
-                            System.err.println("Error semántico: La negación requiere un valor booleano (trueno).");
-                        }
-                        RESULT = "trueno";
-                    :}
-         | PARENTESISAPERTURA{: RESULT = "abreregalo"; :}
-          expresion
-          PARENTESISCIERRE{: RESULT = "cierraregalo"; :}
+           if (!tipo.equals("trueno")) {
+               System.err.println("Error semántico: La negación requiere un valor booleano (trueno).");
+           }
+           RESULT = "trueno";
+           :}
+         | PARENTESISAPERTURA expresion:e PARENTESISCIERRE {: RESULT = e; :}
          | PARENTESISAPERTURA error PARENTESISCIERRE;
 
 literal ::= L_INTEGER:i
