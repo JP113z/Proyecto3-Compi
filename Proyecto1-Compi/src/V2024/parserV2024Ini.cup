@@ -182,7 +182,8 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 /* No terminales */
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
-lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo;
+lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
+parametrosArreglosAux;
 
 /* Precedencias */
 precedence right error;
@@ -280,9 +281,8 @@ tipo ::= INTEGER
     :};
 
 asignacion ::= IDENTIFICADOR ASIGNA expresion
-             | acceso_arreglo ASIGNA expresion
-             | IDENTIFICADOR ASIGNA error
-             | acceso_arreglo ASIGNA error;
+      //       | IDENTIFICADOR ASIGNA expresion arreglo
+             | IDENTIFICADOR ASIGNA error;
 
 
 expresion ::= literal
@@ -361,13 +361,21 @@ case_stmt ::= CASE expresion DOS_PUNTOS lista_sentencias
 default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
                | DEFAULT error lista_sentencias;
 
+
 declaracionArreglo::= tipo IDENTIFICADOR acceso_arreglo
                   | IDENTIFICADOR acceso_arreglo
                   | tipo IDENTIFICADOR acceso_arreglo ASIGNA expresion
+                  | tipo IDENTIFICADOR acceso_arreglo ASIGNA corcheteIzquierdo  parametrosArreglos corcheteDerecho
                   | IDENTIFICADOR acceso_arreglo ASIGNA expresion;
 
+ parametrosArreglos::= parametrosArreglosAux;
+
+parametrosArreglosAux::= parametrosArreglosAux COMA{: RESULT = ","; :}
+                   expresion
+                   | expresion;
+
 arreglo ::=declaracionArreglo
-            |arreglo declaracionArreglo ;
+          |arreglo declaracionArreglo ;
 
 acceso_arreglo ::=  CORCHETEAPERTURA{: RESULT = "abreempaque"; :}
                     expresion

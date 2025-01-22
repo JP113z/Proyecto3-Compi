@@ -57,5 +57,12 @@
   cierracuento
 
   trueno  _miOtraFun_  abreregalo  cierraregalo   abrecuento
+
+    rodolfo _arr_ abreempaque 10 cierraempaque finregalo
+    rodolfo _arr2_ abreempaque 2 cierraempaque entrega abrecuento 2 , 3 cierracuento finregalo
+
+    _arr2_ abreempaque 2 intercambio _id_ navidad _fuc_ abreregalo  cierraregalo cierraempaque entrega 45 finregalo
+    _var_ entrega _arr2_ abreempaque 2 intercambio _id_ navidad _fuc_ abreregalo  cierraregalo cierraempaque navidad 56 finregalo
+
 	 envia -5.6 finregalo  #semantico
   cierracuento

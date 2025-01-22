@@ -45,7 +45,7 @@ _/
 	 bromista  _fl2_ entrega 3.7 adviento _fl1_ navidad  abreregalo 45.6 magos 76 cierraregalo  finregalo  #semantico literal 76
 
 #comentario 2
-	_arr_  entrega  10 intercambio _arr_ abreempaque 67 navidad _i_ cierraempaque  nochebuena _func1_  abreregalo _hola_ ,  true ,  "hola mundo" ,  4.5 ,  'a' cierraregalo  finregalo  #semantico func1 ,  retorno func1
+	_arr_  entrega  10 intercambio _arr_ abreempaque 67 navidad _i_ cierraempaque   finregalo  #semantico func1 ,  retorno func1
 	_fl1_  entrega  4.5 magos _miChar_ adviento -0.005 finregalo  #semantico miChar
 	_miFunc_ abreregalo _miFunc_ abreregalo  cierraregalo  , 'a' cierraregalo  finregalo  #semantico miFunc ,  hola
 	 trueno  _bl0_  entrega  6.7  openslae  8.9 finregalo  #ok
