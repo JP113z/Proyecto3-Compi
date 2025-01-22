@@ -14,6 +14,7 @@ parser code {:
 
     private Arbol arbol;
 
+    private int bloqueActual = 0;
 
     /**public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
                     String tipo = "null";
@@ -103,13 +104,13 @@ parser code {:
     public void imprimirTablaSimbolos() {
         for (String key : listaTablasSimbolos.keySet()) {
             System.out.println("\nTabla de símbolos: " + key);
-            System.out.println("+--------+---------+----------------------+------------+");
-            System.out.println("| Línea  | Columna | Lexema              | Tipo       |");
-            System.out.println("+--------+---------+----------------------+------------+");
+            System.out.println("+--------+---------+----------------------+------------+-----------+");
+            System.out.println("| Línea  | Columna | Lexema              | Tipo       | Bloque    |");
+            System.out.println("+--------+---------+----------------------+------------+-----------+");
             for (String simbolo : listaTablasSimbolos.get(key)) {
                 System.out.println(simbolo);
             }
-            System.out.println("+--------+---------+----------------------+------------+\n");
+            System.out.println("+--------+---------+----------------------+------------+-----------+\n");
         }
     }
 
@@ -131,6 +132,7 @@ parser code {:
         System.out.println("/+++Nueva tabla símbolos función o main+++/ " + nombre);
         ArrayList<String> nuevaTabla = new ArrayList<>();
         currentHash = nombre;
+        bloqueActual = 1;
         listaTablasSimbolos.put(currentHash, nuevaTabla);
     }
 
@@ -154,7 +156,7 @@ parser code {:
     public void agregarVariable(int linea, int columna, String lexema, String tipo) {
         System.out.println("PARSER: identificador (agregar o verificar) " + lexema);
         if (currentHash == null) {
-            System.err.println("Error: No hay una tabla de símbolos activa, linea: " + linea + " clumna:" + columna + " lexema perdido: " + lexema + " tipo: " + tipo);
+            System.err.println("Error: No hay una tabla de símbolos activa");
             return;
         }
         ArrayList<String> tabla = listaTablasSimbolos.get(currentHash);
@@ -162,8 +164,8 @@ parser code {:
             System.err.println("Error: La tabla de símbolos '" + currentHash + "' no existe");
             return;
         }
-        String entrada = String.format("| %-6d | %-7d | %-20s | %-10s |",
-                linea + 1, columna + 1, lexema, tipo);
+        String entrada = String.format("| %-6d | %-7d | %-20s | %-10s | Bloque %-3d |",
+                linea + 1, columna + 1, lexema, tipo, bloqueActual);
         tabla.add(entrada);
     }
 :}
@@ -238,9 +240,17 @@ cabecera_funcion ::= tipo:t IDENTIFICADOR:id
                    :} declaracion_funcion
                    | error IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque;
 
-bloque ::= corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
-         | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho
-         | corcheteIzquierdo error corcheteDerecho;
+bloque ::= corcheteIzquierdo
+        {:
+            parser.bloqueActual++;
+        :}
+        lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
+        | corcheteIzquierdo
+        {:
+            parser.bloqueActual++;
+        :}
+        return_stmt FIN_EXPRESION corcheteDerecho
+        | corcheteIzquierdo error corcheteDerecho;
 
 bloqueEstructura::=corcheteIzquierdo corcheteDerecho
                   | corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
