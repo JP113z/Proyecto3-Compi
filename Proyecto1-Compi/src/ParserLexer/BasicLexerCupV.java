@@ -23,7 +23,7 @@ import java_cup.runtime.*;
 
 
 @SuppressWarnings("fallthrough")
-public class BasicLexerCupV implements Scanner {
+public class BasicLexerCupV implements java_cup.runtime.Scanner {
 
   /** This character denotes the end of file. */
   public static final int YYEOF = -1;
@@ -988,7 +988,7 @@ private Symbol symbol(int type, Object value) {
    * @return the next token.
    * @exception java.io.IOException if any I/O-Error occurs.
    */
-  @Override  public Symbol next_token() throws java.io.IOException
+  @Override  public java_cup.runtime.Symbol next_token() throws java.io.IOException
   {
     int zzInput;
     int zzAction;

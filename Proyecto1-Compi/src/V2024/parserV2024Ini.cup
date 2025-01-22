@@ -154,7 +154,7 @@ parser code {:
     public void agregarVariable(int linea, int columna, String lexema, String tipo) {
         System.out.println("PARSER: identificador (agregar o verificar) " + lexema);
         if (currentHash == null) {
-            System.err.println("Error: No hay una tabla de símbolos activa");
+            System.err.println("Error: No hay una tabla de símbolos activa, linea: " + linea + " clumna:" + columna + " lexema perdido: " + lexema + " tipo: " + tipo);
             return;
         }
         ArrayList<String> tabla = listaTablasSimbolos.get(currentHash);
@@ -183,7 +183,7 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
-parametrosArreglosAux, bloqueEstructura;
+parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion;
 
 /* Precedencias */
 precedence right error;
@@ -209,32 +209,34 @@ lista_funciones ::= lista_funciones:lf funcion:f {: :}
                  | funcion:f {: :}
                  | lista_funciones error funcion;
 
-funcion ::= declaracion_funcion:df {: :}
-          | declaracion_main:dm {: :}
+funcion ::= cabecera_funcion:df {: :}
+          | cabecera_main:dm {: :}
           | error bloque;
 
-declaracion_main ::= tipo:t MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
+declaracion_main ::= PARENTESISAPERTURA PARENTESISCIERRE bloque
+                  |  PARENTESISAPERTURA error PARENTESISCIERRE bloque
+                  ;
+
+cabecera_main ::= tipo:t MAIN
                 {:
                     parser.agregarTablaSimbolos("main", "_verano_");
                     parser.agregarVariable(0, 0, "main", t.toString());
-                :}
-                  | tipo MAIN PARENTESISAPERTURA error PARENTESISCIERRE bloque
-                  | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque;
+                :} declaracion_main
+                | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
+                ;
 
-declaracion_funcion ::= tipo:t IDENTIFICADOR:id PARENTESISAPERTURA parametros:p PARENTESISCIERRE bloque:b
-                    {:
-                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarTablaSimbolos("funcion", id.toString());
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                    :}
-                    | tipo:t IDENTIFICADOR:id PARENTESISAPERTURA PARENTESISCIERRE bloque:b
-                    {:
-                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarTablaSimbolos("funcion", id.toString());
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                    :}
-                    | tipo IDENTIFICADOR PARENTESISAPERTURA error PARENTESISCIERRE bloque
-                    | error IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque;
+declaracion_funcion ::= PARENTESISAPERTURA parametros:p PARENTESISCIERRE bloque:b
+                     | PARENTESISAPERTURA PARENTESISCIERRE bloque:b
+                     | PARENTESISAPERTURA error PARENTESISCIERRE bloque;
+
+
+cabecera_funcion ::= tipo:t IDENTIFICADOR:id
+                   {:
+                       Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                       parser.agregarTablaSimbolos("funcion", id.toString());
+                       parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                   :} declaracion_funcion
+                   | error IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque;
 
 bloque ::= corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
          | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho
