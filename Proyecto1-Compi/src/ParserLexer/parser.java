@@ -879,7 +879,7 @@ public class parser extends java_cup.runtime.lr_parser {
 
     private int bloqueActual = 0;
 
-    /**public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
+    public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
                     String tipo = "null";
                     for (String token : listaTablasSimbolos) {
                         String[] partesToken = token.split(":");
@@ -893,7 +893,7 @@ public class parser extends java_cup.runtime.lr_parser {
                     }
                     System.out.println("tipo: " + tipo);
                     return tipo;
-                }*/
+    }
 
     /**
      * Método: getArbol
@@ -1643,7 +1643,10 @@ class CUP$parser$actions {
           case 54: // expresion ::= literal 
             {
               Object RESULT =null;
-
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		 RESULT = e;
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1679,7 +1682,30 @@ class CUP$parser$actions {
           case 58: // expresion ::= expresion operador_binario expresion 
             {
               Object RESULT =null;
-
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+           // Obtener el tipo de ambos operandos
+           String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+           String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
+           // Validar los tipos de los operandos
+            if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
+                    (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
+                            System.err.println("Error semántico: Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
+            } else if (!tipo1.equals(tipo2)) {
+                System.err.println("Error semántico: Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+            }
+           // Definir el tipo resultante
+            String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
+            RESULT = tipoResultado;
+           
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1688,7 +1714,25 @@ class CUP$parser$actions {
           case 59: // expresion ::= expresion operador_relacional expresion 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                        // Los operadores relacionales siempre devuelven un booleano (trueno)
+                        String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                        String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
 
+                        if (!tipo1.equals(tipo2)) {
+                            System.err.println("Error semántico: Tipos incompatibles para comparación relacional.");
+                        }
+                        RESULT = "trueno";
+                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1697,7 +1741,25 @@ class CUP$parser$actions {
           case 60: // expresion ::= expresion operador_logico expresion 
             {
               Object RESULT =null;
+		int e1left = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int e1right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e1 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int opleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
+		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
+		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int e2left = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                        // Verificar que ambos operandos sean booleanos
+                        String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
+                        String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
 
+                        if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
+                            System.err.println("Error semántico: Operadores lógicos requieren valores booleanos (trueno).");
+                        }
+                        RESULT = "trueno";
+                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1706,7 +1768,18 @@ class CUP$parser$actions {
           case 61: // expresion ::= NEGACION expresion 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                        // Verificar que el operando sea booleano
+                        String tipo = parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
 
+                        if (!tipo.equals("trueno")) {
+                            System.err.println("Error semántico: La negación requiere un valor booleano (trueno).");
+                        }
+                        RESULT = "trueno";
+                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
