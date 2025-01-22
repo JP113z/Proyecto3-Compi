@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import Tree.Arbol;
 import Tree.Nodo;
+import java.util.Stack;
 
 action code {:  :};
 
@@ -88,6 +89,7 @@ parser code {:
 
     // Tabla de símbolos
     HashMap<String, ArrayList<String>> listaTablasSimbolos = new HashMap<>();
+    private Stack<String> contextStack = new Stack<>();
     String currentHash;
 
     /**
@@ -131,7 +133,16 @@ parser code {:
         System.out.println("/+++Nueva tabla símbolos función o main+++/ " + nombre);
         ArrayList<String> nuevaTabla = new ArrayList<>();
         currentHash = nombre;
+        contextStack.push(nombre);  // Agregar al stack
         listaTablasSimbolos.put(currentHash, nuevaTabla);
+    }
+
+    // método para cambiar de contexto al salir de una función
+    public void salirContexto() {
+        if (!contextStack.isEmpty()) {
+            contextStack.pop();
+            currentHash = contextStack.isEmpty() ? null : contextStack.peek();
+        }
     }
 
     /**
@@ -152,7 +163,6 @@ parser code {:
      *   - La línea, columna, lexema y tipo deben ser datos válidos y coherentes con el análisis.
      */
     public void agregarVariable(int linea, int columna, String lexema, String tipo) {
-        System.out.println("PARSER: identificador (agregar o verificar) " + lexema);
         if (currentHash == null) {
             System.err.println("Error: No hay una tabla de símbolos activa");
             return;
@@ -205,26 +215,41 @@ programa ::= lista_funciones
           | error lista_funciones
           | lista_funciones error;
 
-lista_funciones ::= lista_funciones funcion
-                 | funcion
+lista_funciones ::= lista_funciones:lf funcion:f {: :}
+                 | funcion:f {: :}
                  | lista_funciones error funcion;
 
-funcion ::= declaracion_funcion
-          | declaracion_main
+funcion ::= declaracion_funcion:df {: :}
+          | declaracion_main:dm {: :}
           | error bloque;
 
-declaracion_main ::= tipo MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
+declaracion_main ::= tipo:t MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
+                {:
+                    parser.agregarTablaSimbolos("main", "_verano_");
+                    parser.agregarVariable(0, 0, "main", t.toString());
+                :}
                   | tipo MAIN PARENTESISAPERTURA error PARENTESISCIERRE bloque
                   | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque;
 
-declaracion_funcion ::= tipo IDENTIFICADOR PARENTESISAPERTURA PARENTESISCIERRE bloque
-                     | tipo IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque
-                     | tipo IDENTIFICADOR PARENTESISAPERTURA error PARENTESISCIERRE bloque
-                     | error IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque;
+declaracion_funcion ::= tipo:t IDENTIFICADOR:id
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarTablaSimbolos("funcion", id.toString());
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    :}PARENTESISAPERTURA parametros:p PARENTESISCIERRE bloque:b
 
-bloque ::= corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
-         | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho
-         | corcheteIzquierdo error corcheteDerecho;
+                    | tipo:t IDENTIFICADOR:id
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarTablaSimbolos("funcion", id.toString());
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    :}PARENTESISAPERTURA PARENTESISCIERRE bloque:b
+                    | tipo IDENTIFICADOR PARENTESISAPERTURA error PARENTESISCIERRE bloque
+                    | error IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque;
+
+bloque ::= corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho {: parser.salirContexto(); :}
+         | corcheteIzquierdo return_stmt FIN_EXPRESION corcheteDerecho {: parser.salirContexto(); :}
+         | corcheteIzquierdo error corcheteDerecho {: parser.salirContexto(); :};
 
 bloqueEstructura::=corcheteIzquierdo corcheteDerecho
                   | corcheteIzquierdo lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
@@ -247,46 +272,42 @@ sentencia ::= declaracion FIN_EXPRESION
             | error FIN_EXPRESION
             ;
 
-declaracion ::= tipo IDENTIFICADOR
-              | tipo IDENTIFICADOR ASIGNA expresion
-              | arreglo
-              | tipo error
-              ;
+declaracion ::= tipo:t IDENTIFICADOR:id
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+    :}
+    | tipo:t IDENTIFICADOR:id ASIGNA expresion
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+    :}
+    | arreglo
+    | tipo error;
 
 tipo ::= INTEGER
     {:
-       // Nodo tipoNode = parser.crearNodo("INTEGER");
-       // parser.getArbol().getRaiz().agregarHijo(tipoNode);
         RESULT = "rodolfo";
     :}
     | STRING
     {:
-       // Nodo tipoNode = parser.crearNodo("STRING");
-     //   parser.getArbol().getRaiz().agregarHijo(tipoNode);
         RESULT = "cometa";
     :}
     | CHAR
     {:
-      //  Nodo tipoNode = parser.crearNodo("CHAR");
-       // parser.getArbol().getRaiz().agregarHijo(tipoNode);
         RESULT = "cupido";
     :}
     | FLOAT
     {:
-       // Nodo tipoNode = parser.crearNodo("FLOAT");
-      //  parser.getArbol().getRaiz().agregarHijo(tipoNode);
         RESULT = "bromista";
     :}
     | BOOL
     {:
-      //  Nodo tipoNode = parser.crearNodo("BOOL");
-     //   parser.getArbol().getRaiz().agregarHijo(tipoNode);
         RESULT = "trueno";
     :};
 
 asignacion ::= IDENTIFICADOR ASIGNA expresion
-      //       | IDENTIFICADOR ASIGNA expresion arreglo
-             | IDENTIFICADOR ASIGNA error;
+    | IDENTIFICADOR ASIGNA error;
 
 
 expresion ::= literal
@@ -303,11 +324,31 @@ expresion ::= literal
          | PARENTESISAPERTURA error PARENTESISCIERRE;
 
 literal ::= L_INTEGER:i
-          | L_FLOAT:f
-          | L_STRING:s
-          | L_CHAR:c
-          | TRUE{:RESULT = "true";:}
-          | FALSE{:RESULT = "false";:};
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
+        RESULT = "rodolfo";
+    :}
+    | L_FLOAT:f
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
+        RESULT = "bromista";
+    :}
+    | L_STRING:s
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
+        RESULT = "cometa";
+    :}
+    | L_CHAR:c
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
+        RESULT = "cupido";
+    :}
+    | TRUE{:RESULT = "true";:}
+    | FALSE{:RESULT = "false";:};
 
 operador_binario ::= SUMA {:RESULT="navidad";:}
                  | RESTA {:RESULT="intercambio";:}
@@ -366,11 +407,23 @@ default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
                | DEFAULT error lista_sentencias;
 
 
-declaracionArreglo::= tipo IDENTIFICADOR acceso_arreglo
-                  | IDENTIFICADOR acceso_arreglo
-                  | tipo IDENTIFICADOR acceso_arreglo ASIGNA expresion
-                  | tipo IDENTIFICADOR acceso_arreglo ASIGNA corcheteIzquierdo  parametrosArreglos corcheteDerecho
-                  | IDENTIFICADOR acceso_arreglo ASIGNA expresion;
+declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
+{:
+    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+:}
+                  | IDENTIFICADOR:id acceso_arreglo
+                  | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion
+{:
+    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+:}
+                  | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA corcheteIzquierdo parametrosArreglos corcheteDerecho
+{:
+    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+:}
+                  | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion;
 
  parametrosArreglos::= parametrosArreglosAux;
 
@@ -389,10 +442,17 @@ acceso_arreglo ::=  CORCHETEAPERTURA{: RESULT = "abreempaque"; :}
 parametros ::= lista_parametros
             ;
 
-lista_parametros ::= lista_parametros COMA{: RESULT = ","; :}
-                    tipo IDENTIFICADOR
-                  | tipo IDENTIFICADOR
-                  | lista_parametros error tipo IDENTIFICADOR;
+lista_parametros ::= lista_parametros COMA tipo:t IDENTIFICADOR:id
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    :}
+                    | tipo:t IDENTIFICADOR:id
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    :}
+                    | lista_parametros error tipo IDENTIFICADOR;
 
 llamada_funcion ::= IDENTIFICADOR PARENTESISAPERTURA lista_expresiones PARENTESISCIERRE
                   | IDENTIFICADOR PARENTESISAPERTURA PARENTESISCIERRE
