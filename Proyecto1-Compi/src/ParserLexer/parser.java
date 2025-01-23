@@ -900,18 +900,21 @@ public class parser extends java_cup.runtime.lr_parser {
 
     private int bloqueActual = 0;
 
-    public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
+    public String getTipo2(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
-            System.err.println("Error semántico: La tabla de símbolos está vacía o no inicializada.");
+            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                               ": La tabla de símbolos está vacía o no inicializada.");
             return "null";
         }
+
         String tipo = "null";
 
         for (String token : listaTablasSimbolos) {
             // Divide el token en columnas usando "|" como delimitador
             String[] partesToken = token.split("\\|");
             if (partesToken.length < 5) { // Verifica que haya al menos 5 columnas
-                System.err.println("Formato inválido en token: " + token);
+                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                   ": Formato inválido en token: " + token);
                 continue;
             }
             String lexema = partesToken[3].trim(); // Columna "Lexema"
@@ -920,17 +923,18 @@ public class parser extends java_cup.runtime.lr_parser {
             // Compara el lexema con el id que estamos buscando
             if (id.equals(lexema)) {
                 tipo = tipoEncontrado;
-               // System.out.println("Identificador encontrado. Tipo: " + tipo);
                 break;
             }
         }
 
         if (tipo.equals("null")) {
-            System.err.println("Error semántico: Identificador '" + id + "' no está declarado.");
+            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                               ": Identificador '" + id + "' no está declarado.");
         }
 
         return tipo;
     }
+
 
     /**
      * Método: getArbol
@@ -1570,11 +1574,20 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-             String tipo = (e instanceof String) ? e.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
-             if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa"))  {
-                            System.err.println("Error semántico: Solo puede usar el print con enteros, flotantes, cadenas y caracteres");
-                        }
-             RESULT = tipo;
+        // Obtener el símbolo correspondiente a `e` para extraer línea y columna
+        Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+        int line = symbol.left;
+        int column = symbol.right;
+        // Obtener el tipo de la expresión
+        String tipo = (e instanceof String)
+            ? e.toString()
+            : parser.getTipo2(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+        // Validar que el tipo sea compatible con `print`
+        if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
+            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                               ": Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
+        }
+        RESULT = tipo;
          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("print",40, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1588,11 +1601,20 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-            String tipo = (e instanceof String) ? e.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
-            if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")))  {
-                System.err.println("Error semántico: El read solo lee enteros o flotantes");
-            }
-            RESULT = tipo;
+        // Obtener el símbolo correspondiente a `e` para extraer línea y columna
+        Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+        int line = symbol.left;
+        int column = symbol.right;
+        // Obtener el tipo de la expresión
+        String tipo = (e instanceof String)
+            ? e.toString()
+            : parser.getTipo2(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+        // Validar que el tipo sea compatible con `read`
+        if ((!tipo.equals("rodolfo") && !tipo.equals("bromista"))) {
+            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                               ": El read solo lee enteros o flotantes.");
+        }
+        RESULT = tipo;
         
               CUP$parser$result = parser.getSymbolFactory().newSymbol("read",41, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1753,8 +1775,18 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                          String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString());
-                          RESULT = tipo;
+    // Obtener el símbolo directamente desde el stack
+    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+
+    // Extraer línea y columna
+    int line = symbol.left;
+    int column = symbol.right;
+
+    // Llamar a getTipo con los parámetros adicionales
+    String tipo = parser.getTipo2(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+
+    // Asignar el tipo al RESULT
+    RESULT = tipo;
                       
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1783,16 +1815,25 @@ class CUP$parser$actions {
 		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-             // Validar tipos para operadores unarios
-             String tipo = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
-             if (op.toString().equals("quien") || op.toString().equals("grinch")) {
-                 if (!tipo.equals("rodolfo")) {
-                     System.err.println("Error semántico: Incremento/Decremento solo aplica a enteros (rodolfo).");
-                 }
-             } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
-                 System.err.println("Error semántico: Negación solo aplica a enteros o flotantes.");
-             }
-             RESULT = tipo;
+            // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
+            Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+            int line = symbol.left;
+            int column = symbol.right;
+            // Obtener el tipo de la expresión
+            String tipo = (e1 instanceof String)
+                ? e1.toString()
+                : parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line, column);
+            // Validar tipos para operadores unarios
+            if (op.toString().equals("quien") || op.toString().equals("grinch")) {
+                if (!tipo.equals("rodolfo")) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                       ": Incremento/Decremento solo aplica a enteros (rodolfo).");
+                }
+            } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
+                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                   ": Negación solo aplica a enteros o flotantes.");
+            }
+            RESULT = tipo;
          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1812,19 +1853,44 @@ class CUP$parser$actions {
 		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-           // Obtener el tipo de ambos operandos
-           String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
-           String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
-           // Validar los tipos de los operandos
-           if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
-               (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
-               System.err.println("Error semántico: Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
-           } else if (!tipo1.equals(tipo2)) {
-               System.err.println("Error semántico: Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-           }
-           // Definir el tipo resultante
-           String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
-           RESULT = tipoResultado;
+               // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
+               Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+               Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+
+               int line1 = symbol1.left;
+               int column1 = symbol1.right;
+               int line2 = symbol2.left;
+               int column2 = symbol2.right;
+
+               // Debug: Verificar el tipo de e1 y e2 antes de la evaluación
+               System.out.println("DEBUG - e1: " + e1 + ", tipo: " + e1.getClass().getName());
+               System.out.println("DEBUG - e2: " + e2 + ", tipo: " + e2.getClass().getName());
+
+               // Obtener el tipo de ambos operandos
+               String tipo1 = (e1 instanceof String)
+                   ? e1.toString()
+                   : parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+
+               String tipo2 = (e2 instanceof String)
+                   ? e2.toString()
+                   : parser.getTipo2(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+
+               // Depuración extendida
+               System.out.println("DEBUG - tipo1: " + tipo1 + ", tipo2: " + tipo2);
+
+               // Validar los tipos de los operandos
+               if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
+                   (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
+                   System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                      ": Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
+               } else if (!tipo1.equals(tipo2)) {
+                   System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                      ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+               }
+
+               // Definir el tipo resultante
+               String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
+               RESULT = tipoResultado;
            
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1844,31 +1910,46 @@ class CUP$parser$actions {
 		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-             // Obtener el tipo de ambos operandos
-             String tipo1 = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
-             String tipo2 = (e2 instanceof String) ? e2.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
-             // Validar los tipos de los operandos
-             if (op.toString().equals("mary") || op.toString().equals("openslae")) {
-                 // Para `mary` y `openslae`, los tipos pueden ser enteros, flotantes o booleanos
-                 if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista") && !tipo1.equals("trueno")) ||
-                     (!tipo2.equals("rodolfo") && !tipo2.equals("bromista") && !tipo2.equals("trueno"))) {
-                     System.err.println("Error semántico: Operadores '" + op + "' solo admiten enteros (rodolfo), flotantes (bromista) o booleanos (trueno).");
-                 } else if (!tipo1.equals(tipo2)) {
-                     System.err.println("Error semántico: Tipos incompatibles para operador '" + op + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-                 } else {
-                     RESULT = "trueno";
-                 }
-             } else {
-                 // Validación para otros operadores relacionales
-                 if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
-                     (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
-                     System.err.println("Error semántico: Operadores '" + op + "' solo admiten enteros (rodolfo) o flotantes (bromista).");
-                 } else if (!tipo1.equals(tipo2)) {
-                     System.err.println("Error semántico: Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-                 } else {
-                     RESULT = "trueno";
-                 }
-             }
+                // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
+                Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                int line1 = symbol1.left;
+                int column1 = symbol1.right;
+                int line2 = symbol2.left;
+                int column2 = symbol2.right;
+                // Obtener el tipo de ambos operandos
+                String tipo1 = (e1 instanceof String)
+                    ? e1.toString()
+                    : parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+                String tipo2 = (e2 instanceof String)
+                    ? e2.toString()
+                    : parser.getTipo2(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+                // Validar los tipos de los operandos
+                if (op.toString().equals("mary") || op.toString().equals("openslae")) {
+                    // Para `mary` y `openslae`, los tipos pueden ser enteros, flotantes o booleanos
+                    if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista") && !tipo1.equals("trueno")) ||
+                        (!tipo2.equals("rodolfo") && !tipo2.equals("bromista") && !tipo2.equals("trueno"))) {
+                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                           ": Operadores '" + op + "' solo admiten enteros (rodolfo), flotantes (bromista) o booleanos (trueno).");
+                    } else if (!tipo1.equals(tipo2)) {
+                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                           ": Tipos incompatibles para operador '" + op + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                    } else {
+                        RESULT = "trueno";
+                    }
+                } else {
+                    // Validación para otros operadores relacionales
+                    if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
+                        (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
+                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                           ": Operadores '" + op + "' solo admiten enteros (rodolfo) o flotantes (bromista).");
+                    } else if (!tipo1.equals(tipo2)) {
+                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                           ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                    } else {
+                        RESULT = "trueno";
+                    }
+                }
              
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1888,14 +1969,22 @@ class CUP$parser$actions {
 		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-           // Verificar que ambos operandos sean booleanos
-           String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
-           String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString());
-
-           if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
-               System.err.println("Error semántico: Operadores lógicos requieren valores booleanos (trueno).");
-           }
-           RESULT = "trueno";
+            // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
+            Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+            Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+            int line1 = symbol1.left;
+            int column1 = symbol1.right;
+            int line2 = symbol2.left;
+            int column2 = symbol2.right;
+            // Obtener el tipo de ambos operandos
+            String tipo1 = parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+            String tipo2 = parser.getTipo2(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+            // Verificar que ambos operandos sean booleanos
+            if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
+                System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                   ": Operadores lógicos requieren valores booleanos (trueno).");
+            }
+            RESULT = "trueno";
            
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1909,13 +1998,18 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-           // Verificar que el operando sea booleano
-           String tipo = parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
-
-           if (!tipo.equals("trueno")) {
-               System.err.println("Error semántico: La negación requiere un valor booleano (trueno).");
-           }
-           RESULT = "trueno";
+            // Obtener el símbolo correspondiente a `e` para extraer línea y columna
+            Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+            int line = symbol.left;
+            int column = symbol.right;
+            // Obtener el tipo del operando
+            String tipo = parser.getTipo2(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+            // Verificar que el operando sea booleano
+            if (!tipo.equals("trueno")) {
+                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                   ": La negación requiere un valor booleano (trueno).");
+            }
+            RESULT = "trueno";
            
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
