@@ -3,9 +3,10 @@
 rodolfo _funcion_ abreregalo cupido _x22_ , rodolfo _id_ , cometa _hola_ cierraregalo
 abrecuento
 
-
+rodolfo _c_ entrega 4 finregalo
+rodolfo _x_ entrega 4 finregalo
 rodolfo _arr_ abreempaque 2 cierraempaque entrega  abrecuento 2 , 2 cierracuento finregalo
-rodolfo _x1_ entrega  1 navidad 2 finregalo
+rodolfo _x1_ entrega  _x_ navidad 2 finregalo
 
 envia _c_ finregalo
 cierracuento

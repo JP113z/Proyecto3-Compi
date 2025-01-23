@@ -17,19 +17,35 @@ parser code {:
     private int bloqueActual = 0;
 
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
-                    String tipo = "null";
-                    for (String token : listaTablasSimbolos) {
-                        String[] partesToken = token.split(":");
-                        if (id.equals(partesToken[0])) {
-                            tipo = partesToken[1];
-                            break;
-                        }
-                    }
-                    if (tipo.equals("null")) {
-                        System.err.println("Error semántico: Variable " + id + " no declarada.");
-                    }
-                    System.out.println("tipo: " + tipo);
-                    return tipo;
+        if (listaTablasSimbolos == null) {
+            System.err.println("Error semántico: La tabla de símbolos está vacía o no inicializada.");
+            return "null";
+        }
+        String tipo = "null";
+
+        for (String token : listaTablasSimbolos) {
+            // Divide el token en columnas usando "|" como delimitador
+            String[] partesToken = token.split("\\|");
+            if (partesToken.length < 5) { // Verifica que haya al menos 5 columnas
+                System.err.println("Formato inválido en token: " + token);
+                continue;
+            }
+            String lexema = partesToken[3].trim(); // Columna "Lexema"
+            String tipoEncontrado = partesToken[4].trim(); // Columna "Tipo"
+
+            // Compara el lexema con el id que estamos buscando
+            if (id.equals(lexema)) {
+                tipo = tipoEncontrado;
+               // System.out.println("Identificador encontrado. Tipo: " + tipo);
+                break;
+            }
+        }
+
+        if (tipo.equals("null")) {
+            System.err.println("Error semántico: Identificador '" + id + "' no está declarado.");
+        }
+
+        return tipo;
     }
 
     /**
@@ -309,7 +325,10 @@ asignacion ::= IDENTIFICADOR ASIGNA expresion
 
 
 expresion ::= literal:e {: RESULT = e; :}
-         | IDENTIFICADOR:e {:RESULT = e.toString(); :}
+         | IDENTIFICADOR:e {:
+                          String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString());
+                          RESULT = tipo;
+                      :}
          | llamada_funcion:f {: RESULT = f; :}
          | expresion:e1 operador_unario:op {:
              // Validar tipos para operadores unarios

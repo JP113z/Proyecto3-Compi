@@ -890,19 +890,35 @@ public class parser extends java_cup.runtime.lr_parser {
     private int bloqueActual = 0;
 
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id) {
-                    String tipo = "null";
-                    for (String token : listaTablasSimbolos) {
-                        String[] partesToken = token.split(":");
-                        if (id.equals(partesToken[0])) {
-                            tipo = partesToken[1];
-                            break;
-                        }
-                    }
-                    if (tipo.equals("null")) {
-                        System.err.println("Error semántico: Variable " + id + " no declarada.");
-                    }
-                    System.out.println("tipo: " + tipo);
-                    return tipo;
+        if (listaTablasSimbolos == null) {
+            System.err.println("Error semántico: La tabla de símbolos está vacía o no inicializada.");
+            return "null";
+        }
+        String tipo = "null";
+
+        for (String token : listaTablasSimbolos) {
+            // Divide el token en columnas usando "|" como delimitador
+            String[] partesToken = token.split("\\|");
+            if (partesToken.length < 5) { // Verifica que haya al menos 5 columnas
+                System.err.println("Formato inválido en token: " + token);
+                continue;
+            }
+            String lexema = partesToken[3].trim(); // Columna "Lexema"
+            String tipoEncontrado = partesToken[4].trim(); // Columna "Tipo"
+
+            // Compara el lexema con el id que estamos buscando
+            if (id.equals(lexema)) {
+                tipo = tipoEncontrado;
+               // System.out.println("Identificador encontrado. Tipo: " + tipo);
+                break;
+            }
+        }
+
+        if (tipo.equals("null")) {
+            System.err.println("Error semántico: Identificador '" + id + "' no está declarado.");
+        }
+
+        return tipo;
     }
 
     /**
@@ -1689,7 +1705,10 @@ class CUP$parser$actions {
 		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		RESULT = e.toString(); 
+		
+                          String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString());
+                          RESULT = tipo;
+                      
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
