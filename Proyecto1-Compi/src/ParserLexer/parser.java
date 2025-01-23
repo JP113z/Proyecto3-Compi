@@ -1555,9 +1555,18 @@ class CUP$parser$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+        // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
+        String tipoExpresion = e.toString();
+        if (!t.toString().equals(tipoExpresion)) {
+            System.err.println("Error semántico: Tipo incompatible en asignación. Variable '" + id +
+                                       "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+        }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1585,9 +1594,7 @@ class CUP$parser$actions {
           case 48: // tipo ::= INTEGER 
             {
               Object RESULT =null;
-		
-        RESULT = "rodolfo";
-    
+		RESULT = "rodolfo";
               CUP$parser$result = parser.getSymbolFactory().newSymbol("tipo",8, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1596,9 +1603,7 @@ class CUP$parser$actions {
           case 49: // tipo ::= STRING 
             {
               Object RESULT =null;
-		
-        RESULT = "cometa";
-    
+		RESULT = "cometa";
               CUP$parser$result = parser.getSymbolFactory().newSymbol("tipo",8, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1607,9 +1612,7 @@ class CUP$parser$actions {
           case 50: // tipo ::= CHAR 
             {
               Object RESULT =null;
-		
-        RESULT = "cupido";
-    
+		RESULT = "cupido";
               CUP$parser$result = parser.getSymbolFactory().newSymbol("tipo",8, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1618,9 +1621,7 @@ class CUP$parser$actions {
           case 51: // tipo ::= FLOAT 
             {
               Object RESULT =null;
-		
-        RESULT = "bromista";
-    
+		RESULT = "bromista";
               CUP$parser$result = parser.getSymbolFactory().newSymbol("tipo",8, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1629,9 +1630,7 @@ class CUP$parser$actions {
           case 52: // tipo ::= BOOL 
             {
               Object RESULT =null;
-		
-        RESULT = "trueno";
-    
+		RESULT = "trueno";
               CUP$parser$result = parser.getSymbolFactory().newSymbol("tipo",8, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2334,9 +2333,9 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2364,9 +2363,9 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
 		
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2382,9 +2381,9 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-5)).value;
 		
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-6)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;

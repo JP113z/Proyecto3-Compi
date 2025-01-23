@@ -273,7 +273,6 @@ sentencia ::= declaracion FIN_EXPRESION
             | estructura_control
             | expresion FIN_EXPRESION
             | BREAK FIN_EXPRESION
- //           | return_stmt FIN_EXPRESION
             | PRINT PARENTESISAPERTURA expresion PARENTESISCIERRE FIN_EXPRESION
             | READ PARENTESISAPERTURA IDENTIFICADOR PARENTESISCIERRE FIN_EXPRESION
             | error FIN_EXPRESION
@@ -284,34 +283,25 @@ declaracion ::= tipo:t IDENTIFICADOR:id
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
     :}
-    | tipo:t IDENTIFICADOR:id ASIGNA expresion
+    | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+        // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
+        String tipoExpresion = e.toString();
+        if (!t.toString().equals(tipoExpresion)) {
+            System.err.println("Error semántico: Tipo incompatible en asignación. Variable '" + id +
+                                       "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+        }
     :}
     | arreglo
     | tipo error;
 
-tipo ::= INTEGER
-    {:
-        RESULT = "rodolfo";
-    :}
-    | STRING
-    {:
-        RESULT = "cometa";
-    :}
-    | CHAR
-    {:
-        RESULT = "cupido";
-    :}
-    | FLOAT
-    {:
-        RESULT = "bromista";
-    :}
-    | BOOL
-    {:
-        RESULT = "trueno";
-    :};
+tipo ::= INTEGER{:RESULT = "rodolfo";:}
+    | STRING{:RESULT = "cometa";:}
+    | CHAR{:RESULT = "cupido";:}
+    | FLOAT{:RESULT = "bromista";:}
+    | BOOL{:RESULT = "trueno";:};
 
 asignacion ::= IDENTIFICADOR ASIGNA expresion
              | IDENTIFICADOR ASIGNA error
@@ -486,21 +476,21 @@ default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
 
 
 declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
-{:
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-:}
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    :}
                   | IDENTIFICADOR:id acceso_arreglo
                   | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion
-{:
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-:}
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    :}
                   | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA corcheteIzquierdo parametrosArreglos corcheteDerecho
-{:
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-:}
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    :}
                   | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion;
 
  parametrosArreglos::= parametrosArreglosAux;

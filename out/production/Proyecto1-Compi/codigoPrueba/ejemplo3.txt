@@ -4,10 +4,8 @@ rodolfo _funcion_ abreregalo cupido _x22_ , rodolfo _id_ , cometa _hola_ cierrar
 abrecuento
 
 
-#rodolfo _c_ entrega 2 finregalo
-# Operaciones aritméticas
-bromista _x_ entrega 2 mary 2 intercambio 1 finregalo
-
+rodolfo _arr_ abreempaque 2 cierraempaque entrega  abrecuento 2 , 2 cierracuento finregalo
+rodolfo _x1_ entrega  1 navidad 2 finregalo
 
 envia _c_ finregalo
 cierracuento
