@@ -20,7 +20,9 @@ cierracuento
 
 
   bromista  _mi_  abreregalo  rodolfo  _dif_ ,  cupido  _otra_   cierraregalo abrecuento
-     rodolfo _x_ entrega 8 finregalo
+     bromista _x_ entrega 8.4 finregalo
+    rodolfo _test_ finregalo
+    _test_ entrega 8 finregalo
   	 envia _x_ finregalo  #semantico
   cierracuento
 

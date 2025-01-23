@@ -358,7 +358,22 @@ tipo ::= INTEGER{:RESULT = "rodolfo";:}
     | FLOAT{:RESULT = "bromista";:}
     | BOOL{:RESULT = "trueno";:};
 
-asignacion ::= IDENTIFICADOR ASIGNA expresion
+asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
+                {:
+                Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                int line = symbol.left;
+                int column = symbol.right;
+                String tipoIdentificador = parser.getTipo(
+                        parser.listaTablasSimbolos.get(parser.currentHash),id.toString(),line,column);
+                String tipoExpresion = exp.toString();
+                if (!tipoIdentificador.equals(tipoExpresion)) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +  ": Asignación invalida. Variable '" + id +
+                           "' es de tipo " + tipoIdentificador + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+                } else {
+                    System.out.println("Asignación válida: '" + id + "' de tipo '" + tipoIdentificador + "' con valor de tipo '" + tipoExpresion + "'.");
+               }
+
+              :}
              | IDENTIFICADOR ASIGNA error
              | error;
 

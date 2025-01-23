@@ -1741,7 +1741,27 @@ class CUP$parser$actions {
           case 55: // asignacion ::= IDENTIFICADOR ASIGNA expresion 
             {
               Object RESULT =null;
+		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int expleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int expright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object exp = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                int line = symbol.left;
+                int column = symbol.right;
+                String tipoIdentificador = parser.getTipo(
+                        parser.listaTablasSimbolos.get(parser.currentHash),id.toString(),line,column);
+                String tipoExpresion = exp.toString();
+                if (!tipoIdentificador.equals(tipoExpresion)) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +  ": Asignación invalida. Variable '" + id +
+                           "' es de tipo " + tipoIdentificador + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+                } else {
+                    System.out.println("Asignación válida: '" + id + "' de tipo '" + tipoIdentificador + "' con valor de tipo '" + tipoExpresion + "'.");
+               }
 
+              
               CUP$parser$result = parser.getSymbolFactory().newSymbol("asignacion",6, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
