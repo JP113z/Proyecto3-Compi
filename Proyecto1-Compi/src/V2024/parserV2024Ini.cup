@@ -205,7 +205,7 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
-parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read;
+parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read, return_estructura_stmt;
 
 /* Precedencias */
 precedence right error;
@@ -281,8 +281,8 @@ bloqueEstructura ::= corcheteIzquierdo
 
 contenido_estructura_control ::= corcheteDerecho
                              | lista_sentencias corcheteDerecho
-                             | lista_sentencias return_stmt FIN_EXPRESION corcheteDerecho
-                             | return_stmt FIN_EXPRESION corcheteDerecho;
+                             | lista_sentencias return_estructura_stmt FIN_EXPRESION corcheteDerecho
+                             | return_estructura_stmt FIN_EXPRESION corcheteDerecho;
 
 lista_sentencias ::= lista_sentencias sentencia
                   | sentencia
@@ -686,5 +686,9 @@ return_stmt ::= RETURN expresion:e
 
                 RESULT = tipoExpresion;
             :}
+              | RETURN
+              | RETURN error;
+
+return_estructura_stmt ::= RETURN expresion
               | RETURN
               | RETURN error;
