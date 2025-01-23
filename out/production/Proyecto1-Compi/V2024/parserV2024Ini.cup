@@ -621,15 +621,37 @@ default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
 
 
 declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
-                    {:
-                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                    :}
+                      {:
+                               Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                               parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+
+                               // Validar que el tipo sea solo `rodolfo` o `cupido`
+                               if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                                   System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                                      ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                               }
+                      :}
                   | IDENTIFICADOR:id acceso_arreglo
-                  | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion
-                    {:
-                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                  | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
+                     {:
+                            Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                            parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                            String tipoExpresion = (e instanceof String)
+                                ? e.toString()
+                                : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+
+                            // Validar que el tipo de la variable y el tipo de la expresión sean compatibles
+                            if (!t.toString().equals(tipoExpresion)) {
+                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                                   ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
+                                                   "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
+                            }
+
+                            // Validar que el tipo sea solo `rodolfo` o `cupido`
+                            if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                                   ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                            }
                     :}
                   | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA corcheteIzquierdo parametrosArreglos corcheteDerecho
                     {:
@@ -638,7 +660,7 @@ declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                     :}
                   | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion;
 
- parametrosArreglos::= parametrosArreglosAux;
+parametrosArreglos::= parametrosArreglosAux;
 
 parametrosArreglosAux::= parametrosArreglosAux COMA{: RESULT = ","; :}
                    expresion

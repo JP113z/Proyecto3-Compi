@@ -2536,9 +2536,15 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                    
+                               Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                               parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+
+                               // Validar que el tipo sea solo `rodolfo` o `cupido`
+                               if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                                   System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                                      ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                               }
+                      
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2565,9 +2571,28 @@ class CUP$parser$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                            Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                            parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                            String tipoExpresion = (e instanceof String)
+                                ? e.toString()
+                                : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+
+                            // Validar que el tipo de la variable y el tipo de la expresión sean compatibles
+                            if (!t.toString().equals(tipoExpresion)) {
+                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                                   ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
+                                                   "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
+                            }
+
+                            // Validar que el tipo sea solo `rodolfo` o `cupido`
+                            if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                                   ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                            }
                     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
