@@ -201,7 +201,7 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
-parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux;
+parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read;
 
 /* Precedencias */
 precedence right error;
@@ -289,10 +289,27 @@ sentencia ::= declaracion FIN_EXPRESION
             | estructura_control
             | expresion FIN_EXPRESION
             | BREAK FIN_EXPRESION
-            | PRINT PARENTESISAPERTURA expresion PARENTESISCIERRE FIN_EXPRESION
-            | READ PARENTESISAPERTURA IDENTIFICADOR PARENTESISCIERRE FIN_EXPRESION
+            | print FIN_EXPRESION
+            | read FIN_EXPRESION
             | error FIN_EXPRESION
             ;
+print::= PRINT PARENTESISAPERTURA expresion:e PARENTESISCIERRE
+        {:
+             String tipo = (e instanceof String) ? e.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
+             if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa"))  {
+                            System.err.println("Error semántico: Solo puede usar el print con enteros, flotantes, cadenas y caracteres");
+                        }
+             RESULT = tipo;
+         :};
+
+read::= READ PARENTESISAPERTURA expresion:e PARENTESISCIERRE
+        {:
+            String tipo = (e instanceof String) ? e.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString());
+            if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")))  {
+                System.err.println("Error semántico: El read solo lee enteros o flotantes");
+            }
+            RESULT = tipo;
+        :};
 
 declaracion ::= tipo:t IDENTIFICADOR:id
     {:
