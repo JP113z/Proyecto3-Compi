@@ -185,7 +185,7 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
-parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control;
+parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux;
 
 /* Precedencias */
 precedence right error;
@@ -309,8 +309,8 @@ asignacion ::= IDENTIFICADOR ASIGNA expresion
 
 
 expresion ::= literal:e {: RESULT = e; :}
-         | IDENTIFICADOR
-         | llamada_funcion
+         | IDENTIFICADOR:e {:RESULT = e.toString(); :}
+         | llamada_funcion:f {: RESULT = f; :}
          | expresion:e1 operador_unario:op {:
              // Validar tipos para operadores unarios
              String tipo = (e1 instanceof String) ? e1.toString() : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString());
@@ -522,9 +522,11 @@ lista_parametros ::= lista_parametros COMA tipo:t IDENTIFICADOR:id
                     :}
                     | lista_parametros error tipo IDENTIFICADOR;
 
-llamada_funcion ::= IDENTIFICADOR PARENTESISAPERTURA lista_expresiones PARENTESISCIERRE
-                  | IDENTIFICADOR PARENTESISAPERTURA PARENTESISCIERRE
-                  | IDENTIFICADOR PARENTESISAPERTURA error PARENTESISCIERRE;
+llamada_funcion ::= IDENTIFICADOR:e {:RESULT = e.toString(); :} llamada_funcion_aux;
+
+llamada_funcion_aux ::=  PARENTESISAPERTURA lista_expresiones PARENTESISCIERRE
+                      |  PARENTESISAPERTURA PARENTESISCIERRE
+                      |  PARENTESISAPERTURA error PARENTESISCIERRE;
 
 lista_expresiones ::= lista_expresiones COMA{: RESULT = ","; :}
                     expresion
