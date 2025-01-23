@@ -663,6 +663,28 @@ lista_expresiones ::= lista_expresiones COMA{: RESULT = ","; :}
                    | expresion
                    | lista_expresiones error expresion;
 
-return_stmt ::= RETURN expresion
+return_stmt ::= RETURN expresion:e
+            {:
+                // Obtener el tipo de la función actual usando `currentHash`
+                String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, -1, -1);
+
+                System.out.println("Tipoetostring: " + e.toString() + " Tipo funcion: " + tipoFuncion);
+
+                // Obtener el tipo de la expresión de retorno
+                Symbol symbol = (Symbol) CUP$parser$stack.peek(); // Obtener el símbolo de la expresión
+                int line = symbol.left;
+                int column = symbol.right;
+
+                String tipoExpresion = (e instanceof String) ? e.toString() :  parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+
+                System.out.println("Tipo: " + tipoExpresion + " Tipo funcion: " + tipoFuncion);
+                // Comparar los tipos
+                if (!tipoFuncion.equals(tipoExpresion)) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                       ": Tipo de retorno (" + tipoExpresion + ") no coincide con el tipo de la función (" + tipoFuncion + ").");
+                }
+
+                RESULT = tipoExpresion;
+            :}
               | RETURN
               | RETURN error;

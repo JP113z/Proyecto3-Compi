@@ -8,11 +8,23 @@ bromista  _in1_ entrega 56.6 finregalo
 bromista  _in2_ entrega _fl1_ intercambio 14.8 reyes _in1_  navidad 7.9 intercambio 15.9 finregalo
 bromista  _fl2_ entrega 3.7 adviento _fl1_ navidad  abreregalo 45.6 magos 76.9 cierraregalo  finregalo
 
-rodolfo _x_ entrega 8 finregalo
 rodolfo _x3_ entrega 2 finregalo
+
+
 
 narra  abreregalo "Hoal" cierraregalo  finregalo
 escucha  abreregalo _x3_ cierraregalo  finregalo
 
 envia 1 finregalo
 cierracuento
+
+
+  bromista  _mi_  abreregalo  rodolfo  _dif_ ,  cupido  _otra_   cierraregalo abrecuento
+     rodolfo _x_ entrega 8 finregalo
+  	 envia _x_ finregalo  #semantico
+  cierracuento
+
+  bromista  _mi2_  abreregalo  rodolfo  _dif_ ,  cupido  _otra_   cierraregalo abrecuento
+    bromista _h_ entrega 8.9 finregalo
+    envia _h_ finregalo
+  cierracuento

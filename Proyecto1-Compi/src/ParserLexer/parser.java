@@ -2808,7 +2808,31 @@ RESULT = e.toString();
           case 143: // return_stmt ::= RETURN expresion 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                // Obtener el tipo de la función actual usando `currentHash`
+                String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, -1, -1);
 
+                System.out.println("Tipoetostring: " + e.toString() + " Tipo funcion: " + tipoFuncion);
+
+                // Obtener el tipo de la expresión de retorno
+                Symbol symbol = (Symbol) CUP$parser$stack.peek(); // Obtener el símbolo de la expresión
+                int line = symbol.left;
+                int column = symbol.right;
+
+                String tipoExpresion = (e instanceof String) ? e.toString() :  parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+
+                System.out.println("Tipo: " + tipoExpresion + " Tipo funcion: " + tipoFuncion);
+                // Comparar los tipos
+                if (!tipoFuncion.equals(tipoExpresion)) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                       ": Tipo de retorno (" + tipoExpresion + ") no coincide con el tipo de la función (" + tipoFuncion + ").");
+                }
+
+                RESULT = tipoExpresion;
+            
               CUP$parser$result = parser.getSymbolFactory().newSymbol("return_stmt",29, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
