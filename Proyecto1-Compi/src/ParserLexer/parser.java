@@ -900,7 +900,7 @@ public class parser extends java_cup.runtime.lr_parser {
 
     private int bloqueActual = 0;
 
-    public String getTipo2(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
+    public String getTipo(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": La tabla de símbolos está vacía o no inicializada.");
@@ -1581,7 +1581,7 @@ class CUP$parser$actions {
         // Obtener el tipo de la expresión
         String tipo = (e instanceof String)
             ? e.toString()
-            : parser.getTipo2(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+            : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
         // Validar que el tipo sea compatible con `print`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
@@ -1608,7 +1608,7 @@ class CUP$parser$actions {
         // Obtener el tipo de la expresión
         String tipo = (e instanceof String)
             ? e.toString()
-            : parser.getTipo2(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+            : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
         // Validar que el tipo sea compatible con `read`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista"))) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
@@ -1783,7 +1783,7 @@ class CUP$parser$actions {
     int column = symbol.right;
 
     // Llamar a getTipo con los parámetros adicionales
-    String tipo = parser.getTipo2(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+    String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
 
     // Asignar el tipo al RESULT
     RESULT = tipo;
@@ -1822,7 +1822,7 @@ class CUP$parser$actions {
             // Obtener el tipo de la expresión
             String tipo = (e1 instanceof String)
                 ? e1.toString()
-                : parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line, column);
+                : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line, column);
             // Validar tipos para operadores unarios
             if (op.toString().equals("quien") || op.toString().equals("grinch")) {
                 if (!tipo.equals("rodolfo")) {
@@ -1869,11 +1869,11 @@ class CUP$parser$actions {
                // Obtener el tipo de ambos operandos
                String tipo1 = (e1 instanceof String)
                    ? e1.toString()
-                   : parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+                   : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
 
                String tipo2 = (e2 instanceof String)
                    ? e2.toString()
-                   : parser.getTipo2(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+                   : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
 
                // Depuración extendida
                System.out.println("DEBUG - tipo1: " + tipo1 + ", tipo2: " + tipo2);
@@ -1920,10 +1920,10 @@ class CUP$parser$actions {
                 // Obtener el tipo de ambos operandos
                 String tipo1 = (e1 instanceof String)
                     ? e1.toString()
-                    : parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
                 String tipo2 = (e2 instanceof String)
                     ? e2.toString()
-                    : parser.getTipo2(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
                 // Validar los tipos de los operandos
                 if (op.toString().equals("mary") || op.toString().equals("openslae")) {
                     // Para `mary` y `openslae`, los tipos pueden ser enteros, flotantes o booleanos
@@ -1977,8 +1977,8 @@ class CUP$parser$actions {
             int line2 = symbol2.left;
             int column2 = symbol2.right;
             // Obtener el tipo de ambos operandos
-            String tipo1 = parser.getTipo2(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
-            String tipo2 = parser.getTipo2(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+            String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
             // Verificar que ambos operandos sean booleanos
             if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
                 System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
@@ -2003,7 +2003,7 @@ class CUP$parser$actions {
             int line = symbol.left;
             int column = symbol.right;
             // Obtener el tipo del operando
-            String tipo = parser.getTipo2(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+            String tipo = parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
             // Verificar que el operando sea booleano
             if (!tipo.equals("trueno")) {
                 System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
