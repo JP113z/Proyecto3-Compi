@@ -343,10 +343,13 @@ declaracion ::= tipo:t IDENTIFICADOR:id
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
         // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
+        int line = symbol.left;
+        int column = symbol.right;
+
         String tipoExpresion = e.toString();
         if (!t.toString().equals(tipoExpresion)) {
-            System.err.println("Error semántico: Tipo incompatible en asignación. Variable '" + id +
-                                       "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+            System.err.println("Error semántico en línea " + symbol.left + ", columna " + symbol.right +  ": Tipo incompatible en asignación. Variable '" + id +
+                                 "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
         }
     :}
     | arreglo
@@ -379,20 +382,7 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
 
 
 expresion ::= literal:e {: RESULT = e; :}
-         | IDENTIFICADOR:e {:
-    // Obtener el símbolo directamente desde el stack
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-
-    // Extraer línea y columna
-    int line = symbol.left;
-    int column = symbol.right;
-
-    // Llamar a getTipo con los parámetros adicionales
-    String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
-
-    // Asignar el tipo al RESULT
-    RESULT = tipo;
-                      :}
+         | IDENTIFICADOR
          | llamada_funcion:f {: RESULT = f; :}
          | expresion:e1 operador_unario:op {:
             // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
@@ -560,8 +550,18 @@ literal ::= L_INTEGER:i
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
         RESULT = "cupido";
     :}
-    | TRUE{:RESULT = "true";:}
-    | FALSE{:RESULT = "false";:};
+    | TRUE:t
+              {:
+                  Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                  parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
+                  RESULT = "trueno";
+              :}
+    | FALSE:f
+               {:
+                   Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                   parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
+                   RESULT = "trueno";
+               :};
 
 operador_binario ::= SUMA {:RESULT="navidad";:}
                  | RESTA {:RESULT="intercambio";:}
@@ -624,8 +624,6 @@ declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                       {:
                                Symbol symbol = (Symbol) CUP$parser$stack.peek();
                                parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-
-                               // Validar que el tipo sea solo `rodolfo` o `cupido`
                                if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
                                    System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                                       ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
@@ -639,15 +637,11 @@ declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                             String tipoExpresion = (e instanceof String)
                                 ? e.toString()
                                 : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
-
-                            // Validar que el tipo de la variable y el tipo de la expresión sean compatibles
                             if (!t.toString().equals(tipoExpresion)) {
                                 System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                                    ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
                                                    "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
                             }
-
-                            // Validar que el tipo sea solo `rodolfo` o `cupido`
                             if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
                                 System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                                    ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");

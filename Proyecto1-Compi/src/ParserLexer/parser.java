@@ -1664,10 +1664,13 @@ class CUP$parser$actions {
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
         // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
+        int line = symbol.left;
+        int column = symbol.right;
+
         String tipoExpresion = e.toString();
         if (!t.toString().equals(tipoExpresion)) {
-            System.err.println("Error semántico: Tipo incompatible en asignación. Variable '" + id +
-                                       "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+            System.err.println("Error semántico en línea " + symbol.left + ", columna " + symbol.right +  ": Tipo incompatible en asignación. Variable '" + id +
+                                 "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
         }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1800,23 +1803,7 @@ class CUP$parser$actions {
           case 59: // expresion ::= IDENTIFICADOR 
             {
               Object RESULT =null;
-		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
-		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
-		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
-		
-    // Obtener el símbolo directamente desde el stack
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
 
-    // Extraer línea y columna
-    int line = symbol.left;
-    int column = symbol.right;
-
-    // Llamar a getTipo con los parámetros adicionales
-    String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
-
-    // Asignar el tipo al RESULT
-    RESULT = tipo;
-                      
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2133,7 +2120,14 @@ class CUP$parser$actions {
           case 72: // literal ::= TRUE 
             {
               Object RESULT =null;
-		RESULT = "true";
+		int tleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int tright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object t = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                  Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                  parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
+                  RESULT = "trueno";
+              
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2142,7 +2136,14 @@ class CUP$parser$actions {
           case 73: // literal ::= FALSE 
             {
               Object RESULT =null;
-		RESULT = "false";
+		int fleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int fright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object f = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                   Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                   parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
+                   RESULT = "trueno";
+               
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2538,8 +2539,6 @@ class CUP$parser$actions {
 		
                                Symbol symbol = (Symbol) CUP$parser$stack.peek();
                                parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-
-                               // Validar que el tipo sea solo `rodolfo` o `cupido`
                                if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
                                    System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                                       ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
@@ -2580,15 +2579,11 @@ class CUP$parser$actions {
                             String tipoExpresion = (e instanceof String)
                                 ? e.toString()
                                 : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
-
-                            // Validar que el tipo de la variable y el tipo de la expresión sean compatibles
                             if (!t.toString().equals(tipoExpresion)) {
                                 System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                                    ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
                                                    "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
                             }
-
-                            // Validar que el tipo sea solo `rodolfo` o `cupido`
                             if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
                                 System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                                    ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
