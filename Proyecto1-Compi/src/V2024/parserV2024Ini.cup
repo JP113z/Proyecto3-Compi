@@ -242,7 +242,7 @@ declaracion_main ::= PARENTESISAPERTURA PARENTESISCIERRE bloque
 cabecera_main ::= tipo:t MAIN
                 {:
                     parser.agregarTablaSimbolos("main", "_verano_");
-                    parser.agregarVariable(0, 0, "main", t.toString());
+                    parser.agregarVariable(0, 0, "_verano_", t.toString());
                 :} declaracion_main
                 | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
                 ;
@@ -513,6 +513,11 @@ expresion ::= literal:e {: RESULT = e; :}
                 String tipo1 = (e1 instanceof String)
                     ? e1.toString()
                     : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+
+            System.out.println(e2);
+            if (e2 == null) {
+            e2 = "null";
+            }
                 String tipo2 = (e2 instanceof String)
                     ? e2.toString()
                     : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);

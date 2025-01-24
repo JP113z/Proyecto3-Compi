@@ -1246,7 +1246,7 @@ class CUP$parser$actions {
 		Object t = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
                     parser.agregarTablaSimbolos("main", "_verano_");
-                    parser.agregarVariable(0, 0, "main", t.toString());
+                    parser.agregarVariable(0, 0, "_verano_", t.toString());
                 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$0",43, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2010,6 +2010,11 @@ class CUP$parser$actions {
                 String tipo1 = (e1 instanceof String)
                     ? e1.toString()
                     : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+
+            System.out.println(e2);
+            if (e2 == null) {
+            e2 = "null";
+            }
                 String tipo2 = (e2 instanceof String)
                     ? e2.toString()
                     : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);

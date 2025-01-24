@@ -242,7 +242,7 @@ declaracion_main ::= PARENTESISAPERTURA PARENTESISCIERRE bloque
 cabecera_main ::= tipo:t MAIN
                 {:
                     parser.agregarTablaSimbolos("main", "_verano_");
-                    parser.agregarVariable(0, 0, "main", t.toString());
+                    parser.agregarVariable(0, 0, "_verano_", t.toString());
                 :} declaracion_main
                 | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
                 ;
@@ -345,11 +345,10 @@ declaracion ::= tipo:t IDENTIFICADOR:id
         // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
         int line = symbol.left;
         int column = symbol.right;
-
         String tipoExpresion = e.toString();
         if (!t.toString().equals(tipoExpresion)) {
             System.err.println("Error semántico en línea " + symbol.left + ", columna " + symbol.right +  ": Tipo incompatible en asignación. Variable '" + id +
-                                 "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+                               "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
         }
     :}
     | arreglo
@@ -375,14 +374,26 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
                 } else {
                     System.out.println("Asignación válida: '" + id + "' de tipo '" + tipoIdentificador + "' con valor de tipo '" + tipoExpresion + "'.");
                }
-
               :}
              | IDENTIFICADOR ASIGNA error
              | error;
 
 
 expresion ::= literal:e {: RESULT = e; :}
-         | IDENTIFICADOR
+         | IDENTIFICADOR:e {:
+    // Obtener el símbolo directamente desde el stack
+    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+
+    // Extraer línea y columna
+    int line = symbol.left;
+    int column = symbol.right;
+
+    // Llamar a getTipo con los parámetros adicionales
+    String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+
+    // Asignar el tipo al RESULT
+    RESULT = tipo;
+                      :}
          | llamada_funcion:f {: RESULT = f; :}
          | expresion:e1 operador_unario:op {:
             // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
@@ -499,8 +510,17 @@ expresion ::= literal:e {: RESULT = e; :}
             int line2 = symbol2.left;
             int column2 = symbol2.right;
             // Obtener el tipo de ambos operandos
-            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
-            String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+                String tipo1 = (e1 instanceof String)
+                    ? e1.toString()
+                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+
+            System.out.println(e2);
+            if (e2 == null) {
+            e2 = "null";
+            }
+                String tipo2 = (e2 instanceof String)
+                    ? e2.toString()
+                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
             // Verificar que ambos operandos sean booleanos
             if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
                 System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
@@ -622,31 +642,31 @@ default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
 
 declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                       {:
-                               Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                               parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                               if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
-                                   System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                                      ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
-                               }
+                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                         if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                         System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                          ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                        }
                       :}
                   | IDENTIFICADOR:id acceso_arreglo
-                  | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
-                     {:
-                            Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                            parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                            String tipoExpresion = (e instanceof String)
-                                ? e.toString()
-                                : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
-                            if (!t.toString().equals(tipoExpresion)) {
-                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                                   ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
-                                                   "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
-                            }
-                            if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
-                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                                   ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
-                            }
-                    :}
+                  |tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
+                  {:
+                    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    String tipoExpresion = (e instanceof String)
+                    ? e.toString()
+                    : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+                    if (!t.toString().equals(tipoExpresion)) {
+                    System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                       ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
+                                       "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
+                     }
+                     if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                     System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                        ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                     }
+                  :}
                   | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA corcheteIzquierdo parametrosArreglos corcheteDerecho
                     {:
                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
@@ -654,7 +674,7 @@ declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                     :}
                   | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion;
 
-parametrosArreglos::= parametrosArreglosAux;
+ parametrosArreglos::= parametrosArreglosAux;
 
 parametrosArreglosAux::= parametrosArreglosAux COMA{: RESULT = ","; :}
                    expresion
