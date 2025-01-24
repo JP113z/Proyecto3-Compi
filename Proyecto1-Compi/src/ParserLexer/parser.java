@@ -1245,8 +1245,9 @@ class CUP$parser$actions {
 		int tright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object t = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 
+                    Symbol symbol = (Symbol) CUP$parser$stack.peek();
                     parser.agregarTablaSimbolos("main", "_verano_");
-                    parser.agregarVariable(0, 0, "_verano_", t.toString());
+                    parser.agregarVariable(symbol.left, symbol.right, "_verano_", t.toString());
                 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$0",43, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2042,6 +2043,9 @@ class CUP$parser$actions {
             int line = symbol.left;
             int column = symbol.right;
             // Obtener el tipo del operando
+            if (e == null) {
+            e = "null";
+            }
             String tipo = parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
             // Verificar que el operando sea booleano
             if (!tipo.equals("trueno")) {
@@ -2888,7 +2892,9 @@ RESULT = e.toString();
                 String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, -1, -1);
 
                 System.out.println("Tipoetostring: " + e.toString() + " Tipo funcion: " + tipoFuncion);
-
+            if (e == null) {
+            e = "null";
+            }
                 // Obtener el tipo de la expresión de retorno
                 Symbol symbol = (Symbol) CUP$parser$stack.peek(); // Obtener el símbolo de la expresión
                 int line = symbol.left;

@@ -46,6 +46,6 @@ _/
 	_fl1_  entrega  4.5 magos _miChar_ adviento -0.005 finregalo  #semantico miChar
 	_miFunc_ abreregalo _miFunc_ abreregalo  cierraregalo  , 'a' cierraregalo  finregalo  #semantico miFunc ,  hola
 	 trueno  _bl0_  entrega  6.7  openslae  8.9 finregalo  #ok
-	 trueno  _bl1_  entrega  _in1_  upatree  _fl1_  gaspar  false  melchor   baltazar  abreregalo _func2_ abreregalo 3 , _in1_ cierraregalo   minstix  56 cierraregalo  finregalo  #semantico in1  upatree  fl1 ,  func2
+	 trueno  _bl1_  entrega  _in1_  upatree  _fl1_  gaspar  false  melchor   baltazar   _func2_ abreregalo 3 , _in1_ cierraregalo   minstix  56   finregalo  #semantico in1  upatree  fl1 ,  func2
 	 envia   _bl1_ finregalo  #semantico
   cierracuento 
