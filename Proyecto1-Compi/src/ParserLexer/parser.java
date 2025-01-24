@@ -1666,11 +1666,10 @@ class CUP$parser$actions {
         // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
         int line = symbol.left;
         int column = symbol.right;
-
         String tipoExpresion = e.toString();
         if (!t.toString().equals(tipoExpresion)) {
             System.err.println("Error semántico en línea " + symbol.left + ", columna " + symbol.right +  ": Tipo incompatible en asignación. Variable '" + id +
-                                 "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+                               "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
         }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1763,7 +1762,6 @@ class CUP$parser$actions {
                 } else {
                     System.out.println("Asignación válida: '" + id + "' de tipo '" + tipoIdentificador + "' con valor de tipo '" + tipoExpresion + "'.");
                }
-
               
               CUP$parser$result = parser.getSymbolFactory().newSymbol("asignacion",6, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1803,7 +1801,23 @@ class CUP$parser$actions {
           case 59: // expresion ::= IDENTIFICADOR 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+    // Obtener el símbolo directamente desde el stack
+    Symbol symbol = (Symbol) CUP$parser$stack.peek();
 
+    // Extraer línea y columna
+    int line = symbol.left;
+    int column = symbol.right;
+
+    // Llamar a getTipo con los parámetros adicionales
+    String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+
+    // Asignar el tipo al RESULT
+    RESULT = tipo;
+                      
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1993,8 +2007,12 @@ class CUP$parser$actions {
             int line2 = symbol2.left;
             int column2 = symbol2.right;
             // Obtener el tipo de ambos operandos
-            String tipo1 = parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
-            String tipo2 = parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+                String tipo1 = (e1 instanceof String)
+                    ? e1.toString()
+                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
+                String tipo2 = (e2 instanceof String)
+                    ? e2.toString()
+                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
             // Verificar que ambos operandos sean booleanos
             if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
                 System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
@@ -2537,12 +2555,12 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-                               Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                               parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                               if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
-                                   System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                                      ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
-                               }
+                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                         if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                         System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                          ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                        }
                       
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2574,21 +2592,21 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                            Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                            parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                            String tipoExpresion = (e instanceof String)
-                                ? e.toString()
-                                : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
-                            if (!t.toString().equals(tipoExpresion)) {
-                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                                   ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
-                                                   "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
-                            }
-                            if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
-                                System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                                   ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
-                            }
-                    
+                    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                    String tipoExpresion = (e instanceof String)
+                    ? e.toString()
+                    : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+                    if (!t.toString().equals(tipoExpresion)) {
+                    System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                       ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
+                                       "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
+                     }
+                     if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
+                     System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                        ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                     }
+                  
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
