@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import Tree.Arbol;
 import Tree.Nodo;
+import V2024.Resultado;
 
 action code {:  :};
 
@@ -15,6 +16,22 @@ parser code {:
     private Arbol arbol;
 
     private int bloqueActual = 0;
+
+    StringBuffer codMIPS = new StringBuffer();
+    int currentTemp = 1;
+
+    public String newTemp() {
+        return "T" + currentTemp++;
+    }
+
+    public void gen(String instruction) {
+        codMIPS.append(instruction).append("\n");
+    }
+
+    public void imprimirCodigoMIPS() {
+        System.out.println("\n\nCÓDIGO MIPS");
+        System.out.println(codMIPS.toString());
+    }
 
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
@@ -243,10 +260,9 @@ cabecera_main ::= tipo:t MAIN
                 {:
                     Symbol symbol = (Symbol) CUP$parser$stack.peek();
                     parser.agregarTablaSimbolos("main", "_verano_");
-                    parser.agregarVariable(symbol.left, symbol.right, "_verano_", t.toString());
+                    parser.agregarVariable(symbol.left, symbol.right, "_verano_", ((Resultado) t).tipo);
                 :} declaracion_main
-                | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque
-                ;
+                | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque;
 
 declaracion_funcion ::= PARENTESISAPERTURA parametros:p PARENTESISCIERRE bloque:b
                      | PARENTESISAPERTURA PARENTESISCIERRE bloque:b
@@ -257,7 +273,7 @@ cabecera_funcion ::= tipo:t IDENTIFICADOR:id
                    {:
                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
                        parser.agregarTablaSimbolos("funcion", id.toString());
-                       parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                       parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
                    :} declaracion_funcion
                    | error IDENTIFICADOR PARENTESISAPERTURA parametros PARENTESISCIERRE bloque;
 
@@ -300,20 +316,22 @@ sentencia ::= declaracion FIN_EXPRESION
             ;
 print::= PRINT PARENTESISAPERTURA expresion:e PARENTESISCIERRE
         {:
-        // Obtener el símbolo correspondiente a `e` para extraer línea y columna
         Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
         int line = symbol.left;
         int column = symbol.right;
-        // Obtener el tipo de la expresión
-        String tipo = (e instanceof String)
-            ? e.toString()
-            : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+
+
+        String tipo = (e instanceof Resultado)
+            ? ((Resultado) e).tipo
+            : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+
         // Validar que el tipo sea compatible con `print`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
         }
-        RESULT = tipo;
+
+        RESULT = new Resultado(tipo, null);
          :};
 
 read::= READ PARENTESISAPERTURA expresion:e PARENTESISCIERRE
@@ -322,101 +340,130 @@ read::= READ PARENTESISAPERTURA expresion:e PARENTESISCIERRE
         Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
         int line = symbol.left;
         int column = symbol.right;
+
         // Obtener el tipo de la expresión
-        String tipo = (e instanceof String)
-            ? e.toString()
+        String tipo = (e instanceof Resultado)
+            ? ((Resultado) e).tipo
             : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+
         // Validar que el tipo sea compatible con `read`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista"))) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": El read solo lee enteros o flotantes.");
         }
-        RESULT = tipo;
+
+        RESULT = new Resultado(tipo, null);
         :};
 
 declaracion ::= tipo:t IDENTIFICADOR:id
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
     :}
     | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+
         // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
         int line = symbol.left;
         int column = symbol.right;
-        String tipoExpresion = e.toString();
-        if (!t.toString().equals(tipoExpresion)) {
-            System.err.println("Error semántico en línea " + symbol.left + ", columna " + symbol.right +  ": Tipo incompatible en asignación. Variable '" + id +
-                               "' es de tipo " + t + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+
+        if (!((Resultado) t).tipo.equals(((Resultado) e).tipo)) {
+            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                               ": Tipo incompatible en asignación. Variable '" + id +
+                               "' es de tipo " + ((Resultado) t).tipo + ", pero se le asignó un valor de tipo " + ((Resultado) e).tipo + ".");
         }
     :}
     | arreglo
     | tipo error;
 
-tipo ::= INTEGER{:RESULT = "rodolfo";:}
-    | STRING{:RESULT = "cometa";:}
-    | CHAR{:RESULT = "cupido";:}
-    | FLOAT{:RESULT = "bromista";:}
-    | BOOL{:RESULT = "trueno";:};
+tipo ::= INTEGER{: RESULT = new Resultado("rodolfo", null); :}
+    | STRING{: RESULT = new Resultado("cometa", null); :}
+    | CHAR{: RESULT = new Resultado("cupido", null); :}
+    | FLOAT{: RESULT = new Resultado("bromista", null); :}
+    | BOOL{: RESULT = new Resultado("trueno", null); :};
 
 asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
                 {:
                 Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
                 int line = symbol.left;
                 int column = symbol.right;
+
+                // Obtener el tipo del identificador
                 String tipoIdentificador = parser.getTipo(
-                        parser.listaTablasSimbolos.get(parser.currentHash),id.toString(),line,column);
-                String tipoExpresion = exp.toString();
+                        parser.listaTablasSimbolos.get(parser.currentHash), id.toString(), line, column);
+
+                // Obtener el tipo y temporal de la expresión
+                Resultado resultadoExp = (Resultado) exp;
+                String tipoExpresion = resultadoExp.tipo;
+                // Validar tipos
                 if (!tipoIdentificador.equals(tipoExpresion)) {
-                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +  ": Asignación invalida. Variable '" + id +
-                           "' es de tipo " + tipoIdentificador + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                       ": Asignación inválida. Variable '" + id +
+                                       "' es de tipo " + tipoIdentificador + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
                 } else {
-                    System.out.println("Asignación válida: '" + id + "' de tipo '" + tipoIdentificador + "' con valor de tipo '" + tipoExpresion + "'.");
-               }
+                    System.out.println("Asignación válida: '" + id + "' de tipo '" + tipoIdentificador +
+                                       "' con valor de tipo '" + tipoExpresion + "'.");
+
+                    // Generación de código MIPS
+                    String temp = parser.newTemp();
+                    parser.gen("la " + temp + ", " + resultadoExp.temp);  // Cargar el valor de la expresión al temporal
+                    parser.gen("sw " + temp + ", " + id);  // Guardar el valor en la variable
+                }
               :}
              | IDENTIFICADOR ASIGNA error
              | error;
 
-
 expresion ::= literal:e {: RESULT = e; :}
-         | IDENTIFICADOR:e {:
-            // Obtener el símbolo directamente desde el stack
-            Symbol symbol = (Symbol) CUP$parser$stack.peek();
+         | IDENTIFICADOR:e
+             {:
+                 // Obtener el símbolo directamente desde el stack
+                 Symbol symbol = (Symbol) CUP$parser$stack.peek();
 
-            // Extraer línea y columna
-            int line = symbol.left;
-            int column = symbol.right;
+                 // Extraer línea y columna
+                 int line = symbol.left;
+                 int column = symbol.right;
 
-            // Llamar a getTipo con los parámetros adicionales
-            String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+                 // Llamar a `getTipo` para obtener el tipo del identificador
+                 String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
 
-            // Asignar el tipo al RESULT
-            RESULT = tipo; :}
+                 // Generar un temporal para el identificador (si aplica)
+                 String temp = parser.newTemp();
+
+                 // Asignar el tipo y el temporal al resultado
+                 RESULT = new Resultado(tipo, temp);
+             :}
          | llamada_funcion:f {: RESULT = f; :}
-         | expresion:e1 operador_unario:op {:
-            // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
-            Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
-            int line = symbol.left;
-            int column = symbol.right;
-            // Obtener el tipo de la expresión
-            String tipo = (e1 instanceof String)
-                ? e1.toString()
-                : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line, column);
-            // Validar tipos para operadores unarios
-            if (op.toString().equals("quien") || op.toString().equals("grinch")) {
-                if (!tipo.equals("rodolfo")) {
-                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                       ": Incremento/Decremento solo aplica a enteros (rodolfo).");
-                }
-            } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
-                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                   ": Negación solo aplica a enteros o flotantes.");
-            }
-            RESULT = tipo;
-         :}
-         | expresion:e1 operador_binario:op expresion:e2
+         | expresion:e1 operador_unario:op
+           {:
+               // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
+               Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+               int line = symbol.left;
+               int column = symbol.right;
+
+               // Obtener el tipo de la expresión
+               String tipo = ((Resultado) e1).tipo;
+
+               // Validar tipos para operadores unarios
+               if (op.toString().equals("quien") || op.toString().equals("grinch")) {
+                   if (!tipo.equals("rodolfo")) {
+                       System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                          ": Incremento/Decremento solo aplica a enteros (rodolfo).");
+                   }
+               } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
+                   System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                      ": Negación solo aplica a enteros o flotantes.");
+               }
+
+               // Generar el temporal para la operación unaria
+               String temp = parser.newTemp();
+               // Aquí no se genera código MIPS todavía, pero podrías hacerlo después
+
+               // Asignar el resultado con el tipo y el temporal generado
+               RESULT = new Resultado(tipo, temp);
+           :}
+           | expresion:e1 operador_binario:op expresion:e2
            {:
                // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
                Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
@@ -427,21 +474,12 @@ expresion ::= literal:e {: RESULT = e; :}
                int line2 = symbol2.left;
                int column2 = symbol2.right;
 
-               // Debug: Verificar el tipo de e1 y e2 antes de la evaluación
-               //System.out.println("DEBUG - e1: " + e1 + ", tipo: " + e1.getClass().getName());
-               //System.out.println("DEBUG - e2: " + e2 + ", tipo: " + e2.getClass().getName());
+               // Acceder a los tipos de los operandos desde los objetos Resultado
+               String tipo1 = ((Resultado) e1).tipo;
+               String tipo2 = ((Resultado) e2).tipo;
 
-               // Obtener el tipo de ambos operandos
-               String tipo1 = (e1 instanceof String)
-                   ? e1.toString()
-                   : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
-
-               String tipo2 = (e2 instanceof String)
-                   ? e2.toString()
-                   : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
-
-               // Depuración extendida
-               //System.out.println("DEBUG - tipo1: " + tipo1 + ", tipo2: " + tipo2);
+               // Debug: Verificar los tipos antes de la evaluación
+               System.out.println("DEBUG - tipo1: " + tipo1 + ", tipo2: " + tipo2);
 
                // Validar los tipos de los operandos
                if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
@@ -453,9 +491,16 @@ expresion ::= literal:e {: RESULT = e; :}
                                       ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
                }
 
-               // Definir el tipo resultante
+               // Definir el tipo resultante basado en los operandos
                String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
-               RESULT = tipoResultado;
+
+               // Generar un temporal para la operación
+               String temp1 = ((Resultado) e1).temp;
+               String temp2 = ((Resultado) e2).temp;
+               String tempResult = parser.newTemp();
+
+               // Asignar el resultado con el tipo y el temporal generado
+               RESULT = new Resultado(tipoResultado, tempResult);
            :}
          | expresion:e1 operador_relacional:op expresion:e2
              {:
@@ -466,13 +511,11 @@ expresion ::= literal:e {: RESULT = e; :}
                 int column1 = symbol1.right;
                 int line2 = symbol2.left;
                 int column2 = symbol2.right;
-                // Obtener el tipo de ambos operandos
-                String tipo1 = (e1 instanceof String)
-                    ? e1.toString()
-                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
-                String tipo2 = (e2 instanceof String)
-                    ? e2.toString()
-                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+
+                // Obtener los tipos desde los objetos Resultado
+                String tipo1 = ((Resultado) e1).tipo;
+                String tipo2 = ((Resultado) e2).tipo;
+
                 // Validar los tipos de los operandos
                 if (op.toString().equals("mary") || op.toString().equals("openslae")) {
                     // Para `mary` y `openslae`, los tipos pueden ser enteros, flotantes o booleanos
@@ -484,7 +527,8 @@ expresion ::= literal:e {: RESULT = e; :}
                         System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                            ": Tipos incompatibles para operador '" + op + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
                     } else {
-                        RESULT = "trueno";
+                        // Asignar el tipo resultante para comparaciones lógicas
+                        RESULT = new Resultado("trueno", null);
                     }
                 } else {
                     // Validación para otros operadores relacionales
@@ -496,7 +540,8 @@ expresion ::= literal:e {: RESULT = e; :}
                         System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                            ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
                     } else {
-                        RESULT = "trueno";
+                        // Asignar el tipo resultante para comparaciones relacionales
+                        RESULT = new Resultado("trueno", null);
                     }
                 }
              :}
@@ -509,87 +554,82 @@ expresion ::= literal:e {: RESULT = e; :}
             int column1 = symbol1.right;
             int line2 = symbol2.left;
             int column2 = symbol2.right;
-            // Obtener el tipo de ambos operandos
-                String tipo1 = (e1 instanceof String)
-                    ? e1.toString()
-                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e1.toString(), line1, column1);
 
-            System.out.println(e2);
-            if (e2 == null) {
-            e2 = "null";
-            }
-                String tipo2 = (e2 instanceof String)
-                    ? e2.toString()
-                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
+            // Obtener los tipos desde los objetos Resultado
+            String tipo1 = ((Resultado) e1).tipo;
+            String tipo2 = ((Resultado) e2).tipo;
+
             // Verificar que ambos operandos sean booleanos
             if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
                 System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                    ": Operadores lógicos requieren valores booleanos (trueno).");
             }
-            RESULT = "trueno";
+
+            // Definir el tipo resultante
+            RESULT = new Resultado("trueno", null);
            :}
          | NEGACION expresion:e
          | PARENTESISAPERTURA expresion:e PARENTESISCIERRE {: RESULT = e; :}
          | PARENTESISAPERTURA error PARENTESISCIERRE;
 
 literal ::= L_INTEGER:i
-            {:
-                Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
-                RESULT = "rodolfo";
-            :}
-            | L_FLOAT:f
-            {:
-                Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
-                RESULT = "bromista";
-            :}
-            | L_STRING:s
-            {:
-                Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
-                RESULT = "cometa";
-            :}
-            | L_CHAR:c
-            {:
-                Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
-                RESULT = "cupido";
-            :}
-            | TRUE:t
-            {:
-                          Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                          parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
-                          RESULT = "trueno";
-            :}
-            | FALSE:f
-            {:
-                   Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                   parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
-                   RESULT = "trueno";
-            :};
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
+        RESULT = new Resultado("rodolfo", null); // Tipo "rodolfo" y temporal null (aún no se genera código MIPS)
+    :}
+    | L_FLOAT:f
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
+        RESULT = new Resultado("bromista", null); // Tipo "bromista" y temporal null
+    :}
+    | L_STRING:s
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
+        RESULT = new Resultado("cometa", null); // Tipo "cometa" y temporal null
+    :}
+    | L_CHAR:c
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
+        RESULT = new Resultado("cupido", null); // Tipo "cupido" y temporal null
+    :}
+    | TRUE:t
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
+        RESULT = new Resultado("trueno", null); // Tipo "trueno" y temporal null
+    :}
+    | FALSE:f
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
+        RESULT = new Resultado("trueno", null); // Tipo "trueno" y temporal null
+    :};
 
-operador_binario ::= SUMA {:RESULT="navidad";:}
-                 | RESTA {:RESULT="intercambio";:}
-                 | DIVISION {:RESULT="reyes";:}
-                 | MULTIPLICACION {:RESULT="nochebuena";:}
-                 | MODULO {:RESULT="magos";:}
-                 | POTENCIA {:RESULT="adviento";:};
+operador_binario ::= SUMA {:RESULT = new Resultado("navidad", null);:}
+                 | RESTA {:RESULT = new Resultado("intercambio", null);:}
+                 | DIVISION {:RESULT = new Resultado("reyes", null);:}
+                 | MULTIPLICACION {:RESULT = new Resultado("nochebuena", null);:}
+                 | MODULO {:RESULT = new Resultado("magos", null);:}
+                 | POTENCIA {:RESULT = new Resultado("adviento", null);:};
 
-operador_unario ::= INCREMENTO {:RESULT="quien";:}
-                  | DECREMENTO {:RESULT="grinch";:}
-                  | NEGATIVO {:RESULT="-";:};
+operador_unario ::= INCREMENTO {:RESULT = new Resultado("quien", null);:}
+                  | DECREMENTO {:RESULT = new Resultado("grinch", null);:}
+                  | NEGATIVO {:RESULT = new Resultado("-", null);:};
 
-operador_logico ::=  CONJUNCION {:RESULT="melchor";:}
-                  | DISYUNCION {:RESULT="gaspar";:}
-                  | NEGACION {:RESULT="baltazar";:};
+operador_logico ::=  CONJUNCION {:RESULT = new Resultado("melchor", null);:}
+                  | DISYUNCION {:RESULT = new Resultado("gaspar", null);:}
+                  | NEGACION {:RESULT = new Resultado("baltazar", null);:};
 
-operador_relacional ::= MENOR {:RESULT="snowball";:}
-                       | MENOR_IGUAL {:RESULT="evergreen";:}
-                       | MAYOR {:RESULT="minstix";:}
-                       | MAYOR_IGUAL {:RESULT="upatree";:}
-                       | IGUAL {:RESULT="mary";:}
-                       | DIFERENTE {:RESULT="openslae";:};
+operador_relacional ::= MENOR {:RESULT = new Resultado("snowball", null);:}
+                       | MENOR_IGUAL {:RESULT = new Resultado("evergreen", null);:}
+                       | MAYOR {:RESULT = new Resultado("minstix", null);:}
+                       | MAYOR_IGUAL {:RESULT = new Resultado("upatree", null);:}
+                       | IGUAL {:RESULT = new Resultado("mary", null);:}
+                       | DIFERENTE {:RESULT = new Resultado("openslae", null);:};
 
 estructura_control ::= if_stmt
                     | while_stmt
@@ -629,50 +669,83 @@ default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
 declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                       {:
                          Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                         parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                         if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
-                         System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                          ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
-                        }
+                         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+                         if (!((Resultado) t).tipo.equals("rodolfo") && !((Resultado) t).tipo.equals("cupido")) {
+                             System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                                 ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                         }
                       :}
                   | IDENTIFICADOR:id acceso_arreglo
-                  |tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
+                  | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
                   {:
                     Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                    parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
-                    String tipoExpresion = (e instanceof String)
-                    ? e.toString()
-                    : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
-                    if (!t.toString().equals(tipoExpresion)) {
-                    System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                       ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + t +
-                                       "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
+                    parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+                    String tipoExpresion = (e instanceof Resultado)
+                        ? ((Resultado) e).tipo
+                        : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+                    if (!((Resultado) t).tipo.equals(tipoExpresion)) {
+                        System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                           ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + ((Resultado) t).tipo +
+                                           "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
                      }
-                     if (!t.toString().equals("rodolfo") && !t.toString().equals("cupido")) {
-                     System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
-                                        ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                     if (!((Resultado) t).tipo.equals("rodolfo") && !((Resultado) t).tipo.equals("cupido")) {
+                         System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                             ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
                      }
                   :}
                   | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA corcheteIzquierdo parametrosArreglos corcheteDerecho
                     {:
                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
                     :}
-                  | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion;
+                  | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
+                    {:
+                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                        String tipoExpresion = (e instanceof Resultado)
+                            ? ((Resultado) e).tipo
+                            : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+                    :};
 
 parametrosArreglos::= parametrosArreglosAux;
 
-parametrosArreglosAux::= parametrosArreglosAux COMA{: RESULT = ","; :}
-                   expresion
-                   | expresion;
+parametrosArreglosAux::= parametrosArreglosAux COMA
+                        {:
+                            RESULT = new Resultado(",", null);
+                        :}
+                        expresion:e
+                        {:
+                            RESULT = e;
+                        :}
+                   | expresion:e
+                        {:
+                            RESULT = e;
+                        :};
 
-arreglo ::=declaracionArreglo
-          |arreglo declaracionArreglo ;
+arreglo ::= declaracionArreglo
+            {:
+                RESULT = null;
+            :}
+          | arreglo declaracionArreglo
+            {:
+                RESULT = null;
+            :};
 
-acceso_arreglo ::=  CORCHETEAPERTURA{: RESULT = "abreempaque"; :}
-                    expresion
-                    CORCHETECIERRE{: RESULT = "cierraempaque"; :}
-                 | CORCHETEAPERTURA error CORCHETECIERRE;
+acceso_arreglo ::= CORCHETEAPERTURA
+                    {:
+                        RESULT = new Resultado("abreempaque", null);
+                    :}
+                    expresion:e
+                    {:
+                        RESULT = e;
+                    :}
+                    CORCHETECIERRE
+                    {:
+                        RESULT = new Resultado("cierraempaque", null);
+                    :}
+                 | CORCHETEAPERTURA error CORCHETECIERRE
+                    {:
+                        RESULT = null;
+                    :};
 
 parametros ::= lista_parametros
             ;
@@ -680,12 +753,12 @@ parametros ::= lista_parametros
 lista_parametros ::= lista_parametros COMA tipo:t IDENTIFICADOR:id
                     {:
                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
                     :}
                     | tipo:t IDENTIFICADOR:id
                     {:
                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), t.toString());
+                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
                     :}
                     | lista_parametros error tipo IDENTIFICADOR;
 
@@ -694,57 +767,72 @@ llamada_funcion ::= IDENTIFICADOR:id llamada_funcion_aux
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         int line = symbol.left;
         int column = symbol.right;
+
+        // Construir una tabla global combinada
         ArrayList<String> tablaGlobal = new ArrayList<>();
         parser.listaTablasSimbolos.values().forEach(tabla -> {
             if (tabla != null) tablaGlobal.addAll(tabla);
         });
 
+        // Obtener el tipo de la función
         String tipoFuncion = parser.getTipo(tablaGlobal, id.toString(), line, column);
 
         if (tipoFuncion.equals("null")) {
+            // Si no se encuentra la función, asignar un RESULT con tipo "null"
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": La función '" + id + "' no está declarada en ninguna tabla de símbolos.");
-            RESULT = "null";
+            RESULT = new Resultado("null", null);
         } else {
+            // Si es válida, asignar el tipo y dejar el temp como null (porque no estamos generando MIPS aún)
             System.out.println("Invocación válida: " + id + " de tipo: " + tipoFuncion);
-            RESULT = tipoFuncion;
+            RESULT = new Resultado(tipoFuncion, null);
         }
     :};
-
 
 llamada_funcion_aux ::=  PARENTESISAPERTURA lista_expresiones PARENTESISCIERRE
                       |  PARENTESISAPERTURA PARENTESISCIERRE
                       |  PARENTESISAPERTURA error PARENTESISCIERRE;
 
-lista_expresiones ::= lista_expresiones COMA{: RESULT = ","; :}
-                    expresion
-                   | expresion
-                   | lista_expresiones error expresion;
+lista_expresiones ::= lista_expresiones COMA
+                    {:
+                    :}
+                    expresion:e
+                    {:
+                        RESULT = e;
+                    :}
+                   | expresion:e
+                    {:
+                        RESULT = e;
+                    :}
+                   | lista_expresiones error expresion:e
+                    {:
+                        RESULT = e;
+                    :};
 
 return_stmt ::= RETURN expresion:e
             {:
-                // Obtener el tipo de la función actual usando `currentHash`
-                String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, -1, -1);
-
-                System.out.println("Tipoetostring: " + e.toString() + " Tipo funcion: " + tipoFuncion);
-            if (e == null) {
-            e = "null";
-            }
-                // Obtener el tipo de la expresión de retorno
-                Symbol symbol = (Symbol) CUP$parser$stack.peek(); // Obtener el símbolo de la expresión
+                Symbol symbol = (Symbol) CUP$parser$stack.peek();
                 int line = symbol.left;
                 int column = symbol.right;
-
-                String tipoExpresion = (e instanceof String) ? e.toString() :  parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
-
-                System.out.println("Tipo: " + tipoExpresion + " Tipo funcion: " + tipoFuncion);
-                // Comparar los tipos
-                if (!tipoFuncion.equals(tipoExpresion)) {
+                // Obtener el tipo de la función actual usando `currentHash`
+                // Verificar si `e` es nulo
+                if (e == null) {
                     System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                       ": Tipo de retorno (" + tipoExpresion + ") no coincide con el tipo de la función (" + tipoFuncion + ").");
-                }
+                                       ": El retorno no contiene una expresión válida.");
+                } else {
+                    // Obtener el tipo y temporal de la expresión de retorno
+                    String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, line, column);
+                    Resultado resultadoExpresion = (Resultado) e;
+                    String tipoExpresion = resultadoExpresion.tipo;
 
-                RESULT = tipoExpresion;
+                    // Comparar los tipos
+                    if (!tipoFuncion.equals(tipoExpresion)) {
+                        System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                           ": Tipo de retorno (" + tipoExpresion + ") no coincide con el tipo de la función (" + tipoFuncion + ").");
+                    }
+
+                    RESULT = new Resultado(tipoExpresion, resultadoExpresion.temp);
+                }
             :}
               | RETURN
               | RETURN error;

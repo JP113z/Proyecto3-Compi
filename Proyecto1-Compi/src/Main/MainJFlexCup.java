@@ -137,6 +137,7 @@ public class MainJFlexCup {
             }
 
             myParser.imprimirTablaSimbolos();
+            myParser.imprimirCodigoMIPS();
 
             System.out.println("\nÁrbol sintáctico generado:");
            myParser.getArbol().imprimirArbol();
