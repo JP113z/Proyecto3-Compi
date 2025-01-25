@@ -382,19 +382,18 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
 
 expresion ::= literal:e {: RESULT = e; :}
          | IDENTIFICADOR:e {:
-    // Obtener el símbolo directamente desde el stack
-    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+            // Obtener el símbolo directamente desde el stack
+            Symbol symbol = (Symbol) CUP$parser$stack.peek();
 
-    // Extraer línea y columna
-    int line = symbol.left;
-    int column = symbol.right;
+            // Extraer línea y columna
+            int line = symbol.left;
+            int column = symbol.right;
 
-    // Llamar a getTipo con los parámetros adicionales
-    String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+            // Llamar a getTipo con los parámetros adicionales
+            String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
 
-    // Asignar el tipo al RESULT
-    RESULT = tipo;
-                      :}
+            // Asignar el tipo al RESULT
+            RESULT = tipo; :}
          | llamada_funcion:f {: RESULT = f; :}
          | expresion:e1 operador_unario:op {:
             // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
@@ -429,8 +428,8 @@ expresion ::= literal:e {: RESULT = e; :}
                int column2 = symbol2.right;
 
                // Debug: Verificar el tipo de e1 y e2 antes de la evaluación
-               System.out.println("DEBUG - e1: " + e1 + ", tipo: " + e1.getClass().getName());
-               System.out.println("DEBUG - e2: " + e2 + ", tipo: " + e2.getClass().getName());
+               //System.out.println("DEBUG - e1: " + e1 + ", tipo: " + e1.getClass().getName());
+               //System.out.println("DEBUG - e2: " + e2 + ", tipo: " + e2.getClass().getName());
 
                // Obtener el tipo de ambos operandos
                String tipo1 = (e1 instanceof String)
@@ -442,7 +441,7 @@ expresion ::= literal:e {: RESULT = e; :}
                    : parser.getTipo(listaTablasSimbolos.get(currentHash), e2.toString(), line2, column2);
 
                // Depuración extendida
-               System.out.println("DEBUG - tipo1: " + tipo1 + ", tipo2: " + tipo2);
+               //System.out.println("DEBUG - tipo1: " + tipo1 + ", tipo2: " + tipo2);
 
                // Validar los tipos de los operandos
                if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
@@ -530,62 +529,45 @@ expresion ::= literal:e {: RESULT = e; :}
             RESULT = "trueno";
            :}
          | NEGACION expresion:e
-           {:
-            // Obtener el símbolo correspondiente a `e` para extraer línea y columna
-            Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
-            int line = symbol.left;
-            int column = symbol.right;
-            // Obtener el tipo del operando
-            if (e == null) {
-            e = "null";
-            }
-            String tipo = parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
-            // Verificar que el operando sea booleano
-            if (!tipo.equals("trueno")) {
-                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                   ": La negación requiere un valor booleano (trueno).");
-            }
-            RESULT = "trueno";
-           :}
          | PARENTESISAPERTURA expresion:e PARENTESISCIERRE {: RESULT = e; :}
          | PARENTESISAPERTURA error PARENTESISCIERRE;
 
 literal ::= L_INTEGER:i
-    {:
-        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
-        RESULT = "rodolfo";
-    :}
-    | L_FLOAT:f
-    {:
-        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
-        RESULT = "bromista";
-    :}
-    | L_STRING:s
-    {:
-        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
-        RESULT = "cometa";
-    :}
-    | L_CHAR:c
-    {:
-        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
-        RESULT = "cupido";
-    :}
-    | TRUE:t
-              {:
-                  Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                  parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
-                  RESULT = "trueno";
-              :}
-    | FALSE:f
-               {:
+            {:
+                Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
+                RESULT = "rodolfo";
+            :}
+            | L_FLOAT:f
+            {:
+                Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
+                RESULT = "bromista";
+            :}
+            | L_STRING:s
+            {:
+                Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
+                RESULT = "cometa";
+            :}
+            | L_CHAR:c
+            {:
+                Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
+                RESULT = "cupido";
+            :}
+            | TRUE:t
+            {:
+                          Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                          parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
+                          RESULT = "trueno";
+            :}
+            | FALSE:f
+            {:
                    Symbol symbol = (Symbol) CUP$parser$stack.peek();
                    parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
                    RESULT = "trueno";
-               :};
+            :};
 
 operador_binario ::= SUMA {:RESULT="navidad";:}
                  | RESTA {:RESULT="intercambio";:}
@@ -678,7 +660,7 @@ declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                     :}
                   | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion;
 
- parametrosArreglos::= parametrosArreglosAux;
+parametrosArreglos::= parametrosArreglosAux;
 
 parametrosArreglosAux::= parametrosArreglosAux COMA{: RESULT = ","; :}
                    expresion
@@ -707,7 +689,28 @@ lista_parametros ::= lista_parametros COMA tipo:t IDENTIFICADOR:id
                     :}
                     | lista_parametros error tipo IDENTIFICADOR;
 
-llamada_funcion ::= IDENTIFICADOR:e {:RESULT = e.toString(); :} llamada_funcion_aux;
+llamada_funcion ::= IDENTIFICADOR:id llamada_funcion_aux
+    {:
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        int line = symbol.left;
+        int column = symbol.right;
+        ArrayList<String> tablaGlobal = new ArrayList<>();
+        parser.listaTablasSimbolos.values().forEach(tabla -> {
+            if (tabla != null) tablaGlobal.addAll(tabla);
+        });
+
+        String tipoFuncion = parser.getTipo(tablaGlobal, id.toString(), line, column);
+
+        if (tipoFuncion.equals("null")) {
+            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                               ": La función '" + id + "' no está declarada en ninguna tabla de símbolos.");
+            RESULT = "null";
+        } else {
+            System.out.println("Invocación válida: " + id + " de tipo: " + tipoFuncion);
+            RESULT = tipoFuncion;
+        }
+    :};
+
 
 llamada_funcion_aux ::=  PARENTESISAPERTURA lista_expresiones PARENTESISCIERRE
                       |  PARENTESISAPERTURA PARENTESISCIERRE
