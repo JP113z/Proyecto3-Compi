@@ -1992,7 +1992,7 @@ class CUP$parser$actions {
                 int column1 = symbol1.right;
                 int line2 = symbol2.left;
                 int column2 = symbol2.right;
-
+                String operador = ((Resultado) op).tipo;
                 // Obtener los tipos desde los objetos Resultado
                 String tipo1 = ((Resultado) e1).tipo;
                 String tipo2 = ((Resultado) e2).tipo;
@@ -2003,10 +2003,10 @@ class CUP$parser$actions {
                     if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista") && !tipo1.equals("trueno")) ||
                         (!tipo2.equals("rodolfo") && !tipo2.equals("bromista") && !tipo2.equals("trueno"))) {
                         System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                           ": Operadores '" + op + "' solo admiten enteros (rodolfo), flotantes (bromista) o booleanos (trueno).");
+                                           ": Operadores '" + operador + "' solo admiten enteros (rodolfo), flotantes (bromista) o booleanos (trueno).");
                     } else if (!tipo1.equals(tipo2)) {
                         System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                           ": Tipos incompatibles para operador '" + op + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                                           ": Tipos incompatibles para operador '" + operador + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
                     } else {
                         // Asignar el tipo resultante para comparaciones lógicas
                         RESULT = new Resultado("trueno", null);
@@ -2016,7 +2016,7 @@ class CUP$parser$actions {
                     if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
                         (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
                         System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                           ": Operadores '" + op + "' solo admiten enteros (rodolfo) o flotantes (bromista).");
+                                           ": Operadores '" + operador + "' solo admiten enteros (rodolfo) o flotantes (bromista).");
                     } else if (!tipo1.equals(tipo2)) {
                         System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                            ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
