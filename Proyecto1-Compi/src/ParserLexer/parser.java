@@ -913,18 +913,34 @@ public class parser extends java_cup.runtime.lr_parser {
     StringBuffer codMIPS = new StringBuffer();
     int currentTemp = 1;
 
-    public String newTemp() {
-        return "T" + currentTemp++;
-    }
+   public String newTemp() {
+           return "T" + currentTemp++;
+       }
 
-    public void gen(String instruction) {
-        codMIPS.append(instruction).append("\n");
-    }
+       public void gen(String instruction) {
+              System.out.println("Generando instrucción: " + instruction);  // Impresión de depuración
+              codMIPS.append(instruction).append("\n");  // Asegúrate de que la instrucción se agregue correctamente
+          }
 
-    public void imprimirCodigoMIPS() {
-        System.out.println("\n\nCÓDIGO MIPS");
-        System.out.println(codMIPS.toString());
-    }
+        public void imprimirCodigoMIPS() {
+               if (codMIPS.length() == 0) {
+                   System.out.println("No se generaron instrucciones MIPS.");
+               } else {
+                   System.out.println("\n\nCÓDIGO MIPS");
+                   System.out.println(codMIPS.toString());
+               }
+        }
+
+        public void asignarCodigoMIPS(String id, String temp) {
+                if (id == null || temp == null) {
+                    System.err.println("Error: id o temp no pueden ser nulos");
+                    return;
+                }
+                gen("la $t0, " + id);  // Cargar la dirección de la variable en $t0
+                gen("lw $t1, " + temp); // Cargar el valor del temporal en $t1
+                gen("sw $t1, 0($t0)");  // Guardar el valor en la dirección de la variable
+               // imprimirCodigoMIPS();
+       }
 
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
@@ -960,6 +976,35 @@ public class parser extends java_cup.runtime.lr_parser {
 
         return tipo;
     }
+
+    public String getLexema(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
+            String lexema = "null";  // Inicializamos con "null" para indicar que no se encontró
+
+            for (String token : listaTablasSimbolos) {
+                String[] partesToken = token.split("\\|");
+
+                if (partesToken.length < 5) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                       ": Formato inválido en token: " + token);
+                    continue;
+                }
+
+                String lexemaEncontrado = partesToken[3].trim();  // Columna "Lexema"
+
+                if (id.equals(lexemaEncontrado)) {
+                    lexema = lexemaEncontrado;  // Encontramos el lexema
+                    break;
+                }
+            }
+
+            if (lexema.equals("null")) {
+                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                   ": Identificador '" + id + "' no está declarado.");
+            }
+
+            return lexema;
+        }
+
 
 
     /**
@@ -1954,8 +1999,45 @@ class CUP$parser$actions {
                } else if (!tipo1.equals(tipo2)) {
                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                       ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-               }
+               }else {
+                   String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
 
+                   String temp1 = ((Resultado) e1).temp;
+                   String temp2 = ((Resultado) e2).temp;
+                   String tempResultado = parser.newTemp();
+
+                   System.out.println("Expresion: " + ((Resultado) e1).tipo);
+                   switch (((Resultado) op).tipo) {
+                            case "navidad": // Suma
+                                  parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2);  // Suma
+                                  break;
+                            case "intercambio": // Resta
+                                  parser.gen("sub " + tempResultado + ", " + temp1 + ", " + temp2);  // Resta
+                                  break;
+                           case "nochebuena": // Multiplicación
+                                 parser.gen("mul " + tempResultado + ", " + temp1 + ", " + temp2);  // Multiplicación
+                                 break;
+                           case "reyes": // División
+                                 parser.gen("div " + temp1 + ", " + temp2);  // División
+                                 parser.gen("mflo " + tempResultado);  // Guardar el resultado en el temporal
+                                 break;
+                           case "magos": // Módulo
+                                 parser.gen("div " + temp1 + ", " + temp2);  // División para obtener el resto
+                                 parser.gen("mfhi " + tempResultado);  // El resto se guarda en mfhi
+                                 break;
+                           case "adviento": // Potencia
+                                 //Hay que bucar a que traduce en MIPS
+                                 break;
+                           default:
+                                 System.err.println("Error: Operación binaria no soportada.");
+                                  }
+
+                         RESULT = new Resultado(tipoResultado, tempResultado);
+
+                         // Llamar a asignarCodigoMIPS después de todas las operaciones para almacenar el resultado en la variable
+                         parser.asignarCodigoMIPS("resultado", tempResultado);
+
+               }
                // Definir el tipo resultante basado en los operandos
                String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
 
