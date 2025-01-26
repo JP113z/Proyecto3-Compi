@@ -918,8 +918,8 @@ public class parser extends java_cup.runtime.lr_parser {
        }
 
        public void gen(String instruction) {
-              System.out.println("Generando instrucción: " + instruction);  // Impresión de depuración
-              codMIPS.append(instruction).append("\n");  // Asegúrate de que la instrucción se agregue correctamente
+              System.out.println("Generando instrucción: " + instruction);
+              codMIPS.append(instruction).append("\n");
           }
 
         public void imprimirCodigoMIPS() {
@@ -976,37 +976,6 @@ public class parser extends java_cup.runtime.lr_parser {
 
         return tipo;
     }
-
-    public String getLexema(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
-            String lexema = "null";  // Inicializamos con "null" para indicar que no se encontró
-
-            for (String token : listaTablasSimbolos) {
-                String[] partesToken = token.split("\\|");
-
-                if (partesToken.length < 5) {
-                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                       ": Formato inválido en token: " + token);
-                    continue;
-                }
-
-                String lexemaEncontrado = partesToken[3].trim();  // Columna "Lexema"
-
-                if (id.equals(lexemaEncontrado)) {
-                    lexema = lexemaEncontrado;  // Encontramos el lexema
-                    break;
-                }
-            }
-
-            if (lexema.equals("null")) {
-                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                   ": Identificador '" + id + "' no está declarado.");
-            }
-
-            return lexema;
-        }
-
-
-
     /**
      * Método: getArbol
      * Objetivo: Obtener el arbol.
