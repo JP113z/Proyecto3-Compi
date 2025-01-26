@@ -1677,9 +1677,18 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
-    
+           // Obtener el símbolo asociado a la variable
+           Symbol symbol = (Symbol) CUP$parser$stack.peek();
+           parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+
+           // Generar instrucciones MIPS para la variable (espacio en la memoria)
+           String tipo = ((Resultado) t).tipo;
+           String temp = parser.newTemp(); // Crear un temporal para la variable
+
+           // Aquí se supone que las variables son almacenadas en el stack o memoria
+           parser.gen("sw $zero, " + id); // Inicializar con 0 (puedes usar otro valor si es necesario)
+           System.out.println("Generando instrucción: sw $zero, " + id); // Imprimir la instrucción MIPS generada
+         
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1709,7 +1718,16 @@ class CUP$parser$actions {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": Tipo incompatible en asignación. Variable '" + id +
                                "' es de tipo " + ((Resultado) t).tipo + ", pero se le asignó un valor de tipo " + ((Resultado) e).tipo + ".");
-        }
+        }else {
+                 System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
+                                    "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
+
+                 // Generación de código MIPS
+                 String temp = parser.newTemp();
+                 parser.gen("la " + temp + ", " + ((Resultado) e).temp);  // Cargar el valor de la expresión en un temporal
+                 parser.gen("sw " + temp + ", " + id);  // Guardar el valor en la variable
+                 System.out.println("Generando instrucción: sw " + temp + ", " + id); // Instrucción MIPS
+             }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1859,17 +1877,12 @@ class CUP$parser$actions {
 		
                  // Obtener el símbolo directamente desde el stack
                  Symbol symbol = (Symbol) CUP$parser$stack.peek();
-
-                 // Extraer línea y columna
                  int line = symbol.left;
                  int column = symbol.right;
 
-                 // Llamar a `getTipo` para obtener el tipo del identificador
                  String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
-
-                 // Generar un temporal para el identificador (si aplica)
                  String temp = parser.newTemp();
-
+                parser.gen("lw " + temp + ", " + e);
                  // Asignar el tipo y el temporal al resultado
                  RESULT = new Resultado(tipo, temp);
              
@@ -1958,7 +1971,7 @@ class CUP$parser$actions {
                String tipo2 = ((Resultado) e2).tipo;
 
                // Debug: Verificar los tipos antes de la evaluación
-               System.out.println("DEBUG - tipo1: " + tipo1 + ", tipo2: " + tipo2);
+              // System.out.println("DEBUG - e1: " + tipo1  + ", tipo2: " + tipo2);
 
                // Validar los tipos de los operandos
                if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
@@ -1975,7 +1988,8 @@ class CUP$parser$actions {
                    String temp2 = ((Resultado) e2).temp;
                    String tempResultado = parser.newTemp();
 
-                   System.out.println("Expresion: " + ((Resultado) e1).tipo);
+
+                   System.out.println("Expresion1: " + e1);
                    switch (((Resultado) op).tipo) {
                             case "navidad": // Suma
                                   parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2);  // Suma
