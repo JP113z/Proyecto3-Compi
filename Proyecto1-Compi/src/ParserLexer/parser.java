@@ -1619,18 +1619,38 @@ class CUP$parser$actions {
         int line = symbol.left;
         int column = symbol.right;
 
-
+        // Obtener el tipo y temporal de la expresión
         String tipo = (e instanceof Resultado)
             ? ((Resultado) e).tipo
             : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+        String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
 
         // Validar que el tipo sea compatible con `print`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
+        } else {
+            if (temp != null) {
+                parser.gen("move $a0, " + temp);
+                switch (tipo) {
+                    case "rodolfo": // Entero
+                        parser.gen("li $v0, 1");
+                        break;
+                    case "bromista": // Flotante
+                        parser.gen("li $v0, 2");
+                        break;
+                    case "cometa": // Cadena
+                        parser.gen("li $v0, 4");
+                        break;
+                    case "cupido": // Carácter
+                        parser.gen("li $v0, 11");
+                        break;
+                }
+                parser.gen("syscall");
+            }
         }
 
-        RESULT = new Resultado(tipo, null);
+        RESULT = new Resultado(tipo, temp);
          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("print",40, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1644,23 +1664,37 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
 		
-        // Obtener el símbolo correspondiente a `e` para extraer línea y columna
         Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
         int line = symbol.left;
         int column = symbol.right;
 
-        // Obtener el tipo de la expresión
         String tipo = (e instanceof Resultado)
             ? ((Resultado) e).tipo
-            : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+            : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+        String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
 
-        // Validar que el tipo sea compatible con `read`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista"))) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": El read solo lee enteros o flotantes.");
-        }
+        } else {
+            String tempRead = parser.newTemp();
+            switch (tipo) {
+                case "rodolfo":
+                    parser.gen("li $v0, 5");
+                    break;
+                case "bromista":
+                    parser.gen("li $v0, 6");
+                    break;
+            }
+            parser.gen("syscall");
+            parser.gen("move " + tempRead + ", $v0");
 
-        RESULT = new Resultado(tipo, null);
+            if (temp != null) {
+                parser.asignarCodigoMIPS(temp, tempRead);
+            }
+
+            RESULT = new Resultado(tipo, tempRead);
+        }
         
               CUP$parser$result = parser.getSymbolFactory().newSymbol("read",41, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1677,17 +1711,11 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-           // Obtener el símbolo asociado a la variable
            Symbol symbol = (Symbol) CUP$parser$stack.peek();
            parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
-           // Generar instrucciones MIPS para la variable (espacio en la memoria)
-           String tipo = ((Resultado) t).tipo;
-           String temp = parser.newTemp(); // Crear un temporal para la variable
-
-           // Aquí se supone que las variables son almacenadas en el stack o memoria
-           parser.gen("sw $zero, " + id); // Inicializar con 0 (puedes usar otro valor si es necesario)
-           System.out.println("Generando instrucción: sw $zero, " + id); // Imprimir la instrucción MIPS generada
+           parser.gen("sw $zero, " + id);
+           System.out.println("Generando instrucción: sw $zero, " + id);
          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1710,7 +1738,6 @@ class CUP$parser$actions {
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
-        // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
         int line = symbol.left;
         int column = symbol.right;
 
@@ -1718,16 +1745,16 @@ class CUP$parser$actions {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": Tipo incompatible en asignación. Variable '" + id +
                                "' es de tipo " + ((Resultado) t).tipo + ", pero se le asignó un valor de tipo " + ((Resultado) e).tipo + ".");
-        }else {
-                 System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
-                                    "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
+        } else {
+            System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
+                               "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
 
-                 // Generación de código MIPS
-                 String temp = parser.newTemp();
-                 parser.gen("la " + temp + ", " + ((Resultado) e).temp);  // Cargar el valor de la expresión en un temporal
-                 parser.gen("sw " + temp + ", " + id);  // Guardar el valor en la variable
-                 System.out.println("Generando instrucción: sw " + temp + ", " + id); // Instrucción MIPS
-             }
+            String temp = ((Resultado) e).temp;
+            parser.gen("la $t0, " + id);
+            parser.gen("lw $t1, " + temp);
+            parser.gen("sw $t1, 0($t0)");
+            System.out.println("Generando instrucción: sw $t1, 0($t0)");
+        }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2187,8 +2214,10 @@ class CUP$parser$actions {
 		Object i = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
-        RESULT = new Resultado("rodolfo", null); // Tipo "rodolfo" y temporal null (aún no se genera código MIPS)
+        parser.gen("li " + temp + ", " + symbol.value);
+        RESULT = new Resultado("rodolfo", temp);
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2203,8 +2232,10 @@ class CUP$parser$actions {
 		Object f = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
-        RESULT = new Resultado("bromista", null); // Tipo "bromista" y temporal null
+        parser.gen("li.s " + temp + ", " + symbol.value);
+        RESULT = new Resultado("bromista", temp);
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2219,8 +2250,10 @@ class CUP$parser$actions {
 		Object s = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
-        RESULT = new Resultado("cometa", null); // Tipo "cometa" y temporal null
+        parser.gen("la " + temp + ", " + symbol.value);
+        RESULT = new Resultado("cometa", temp);
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2235,8 +2268,10 @@ class CUP$parser$actions {
 		Object c = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
-        RESULT = new Resultado("cupido", null); // Tipo "cupido" y temporal null
+        parser.gen("li " + temp + ", '" + symbol.value + "'");
+        RESULT = new Resultado("cupido", temp);
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2251,8 +2286,10 @@ class CUP$parser$actions {
 		Object t = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
-        RESULT = new Resultado("trueno", null); // Tipo "trueno" y temporal null
+        parser.gen("li " + temp + ", 1");
+        RESULT = new Resultado("trueno", temp);
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2267,8 +2304,10 @@ class CUP$parser$actions {
 		Object f = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
-        RESULT = new Resultado("trueno", null); // Tipo "trueno" y temporal null
+        parser.gen("li " + temp + ", 0");
+        RESULT = new Resultado("trueno", temp);
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

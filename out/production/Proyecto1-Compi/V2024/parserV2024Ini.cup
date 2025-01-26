@@ -334,61 +334,88 @@ print::= PRINT PARENTESISAPERTURA expresion:e PARENTESISCIERRE
         int line = symbol.left;
         int column = symbol.right;
 
-
+        // Obtener el tipo y temporal de la expresión
         String tipo = (e instanceof Resultado)
             ? ((Resultado) e).tipo
             : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+        String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
 
         // Validar que el tipo sea compatible con `print`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
+        } else {
+            if (temp != null) {
+                parser.gen("move $a0, " + temp);
+                switch (tipo) {
+                    case "rodolfo": // Entero
+                        parser.gen("li $v0, 1");
+                        break;
+                    case "bromista": // Flotante
+                        parser.gen("li $v0, 2");
+                        break;
+                    case "cometa": // Cadena
+                        parser.gen("li $v0, 4");
+                        break;
+                    case "cupido": // Carácter
+                        parser.gen("li $v0, 11");
+                        break;
+                }
+                parser.gen("syscall");
+            }
         }
 
-        RESULT = new Resultado(tipo, null);
+        RESULT = new Resultado(tipo, temp);
          :};
 
 read::= READ PARENTESISAPERTURA expresion:e PARENTESISCIERRE
         {:
-        // Obtener el símbolo correspondiente a `e` para extraer línea y columna
         Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
         int line = symbol.left;
         int column = symbol.right;
 
-        // Obtener el tipo de la expresión
         String tipo = (e instanceof Resultado)
             ? ((Resultado) e).tipo
-            : parser.getTipo(listaTablasSimbolos.get(currentHash), e.toString(), line, column);
+            : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+        String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
 
-        // Validar que el tipo sea compatible con `read`
         if ((!tipo.equals("rodolfo") && !tipo.equals("bromista"))) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": El read solo lee enteros o flotantes.");
-        }
+        } else {
+            String tempRead = parser.newTemp();
+            switch (tipo) {
+                case "rodolfo":
+                    parser.gen("li $v0, 5");
+                    break;
+                case "bromista":
+                    parser.gen("li $v0, 6");
+                    break;
+            }
+            parser.gen("syscall");
+            parser.gen("move " + tempRead + ", $v0");
 
-        RESULT = new Resultado(tipo, null);
+            if (temp != null) {
+                parser.asignarCodigoMIPS(temp, tempRead);
+            }
+
+            RESULT = new Resultado(tipo, tempRead);
+        }
         :};
 
 declaracion ::= tipo:t IDENTIFICADOR:id
           {:
-           // Obtener el símbolo asociado a la variable
            Symbol symbol = (Symbol) CUP$parser$stack.peek();
            parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
-           // Generar instrucciones MIPS para la variable (espacio en la memoria)
-           String tipo = ((Resultado) t).tipo;
-           String temp = parser.newTemp(); // Crear un temporal para la variable
-
-           // Aquí se supone que las variables son almacenadas en el stack o memoria
-           parser.gen("sw $zero, " + id); // Inicializar con 0 (puedes usar otro valor si es necesario)
-           System.out.println("Generando instrucción: sw $zero, " + id); // Imprimir la instrucción MIPS generada
+           parser.gen("sw $zero, " + id);
+           System.out.println("Generando instrucción: sw $zero, " + id);
          :}
     | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
-        // Verificar que el tipo de la expresión sea compatible con el tipo de la variable
         int line = symbol.left;
         int column = symbol.right;
 
@@ -396,19 +423,20 @@ declaracion ::= tipo:t IDENTIFICADOR:id
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": Tipo incompatible en asignación. Variable '" + id +
                                "' es de tipo " + ((Resultado) t).tipo + ", pero se le asignó un valor de tipo " + ((Resultado) e).tipo + ".");
-        }else {
-                 System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
-                                    "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
+        } else {
+            System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
+                               "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
 
-                 // Generación de código MIPS
-                 String temp = parser.newTemp();
-                 parser.gen("la " + temp + ", " + ((Resultado) e).temp);  // Cargar el valor de la expresión en un temporal
-                 parser.gen("sw " + temp + ", " + id);  // Guardar el valor en la variable
-                 System.out.println("Generando instrucción: sw " + temp + ", " + id); // Instrucción MIPS
-             }
+            String temp = ((Resultado) e).temp;
+            parser.gen("la $t0, " + id);
+            parser.gen("lw $t1, " + temp);
+            parser.gen("sw $t1, 0($t0)");
+            System.out.println("Generando instrucción: sw $t1, 0($t0)");
+        }
     :}
     | arreglo
     | tipo error;
+
 
 tipo ::= INTEGER{: RESULT = new Resultado("rodolfo", null); :}
     | STRING{: RESULT = new Resultado("cometa", null); :}
@@ -651,38 +679,50 @@ expresion ::= literal:e {: RESULT = e; :}
 literal ::= L_INTEGER:i
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
-        RESULT = new Resultado("rodolfo", null); // Tipo "rodolfo" y temporal null (aún no se genera código MIPS)
+        parser.gen("li " + temp + ", " + symbol.value);
+        RESULT = new Resultado("rodolfo", temp);
     :}
     | L_FLOAT:f
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
-        RESULT = new Resultado("bromista", null); // Tipo "bromista" y temporal null
+        parser.gen("li.s " + temp + ", " + symbol.value);
+        RESULT = new Resultado("bromista", temp);
     :}
     | L_STRING:s
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
-        RESULT = new Resultado("cometa", null); // Tipo "cometa" y temporal null
+        parser.gen("la " + temp + ", " + symbol.value);
+        RESULT = new Resultado("cometa", temp);
     :}
     | L_CHAR:c
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cupido");
-        RESULT = new Resultado("cupido", null); // Tipo "cupido" y temporal null
+        parser.gen("li " + temp + ", '" + symbol.value + "'");
+        RESULT = new Resultado("cupido", temp);
     :}
     | TRUE:t
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
-        RESULT = new Resultado("trueno", null); // Tipo "trueno" y temporal null
+        parser.gen("li " + temp + ", 1");
+        RESULT = new Resultado("trueno", temp);
     :}
     | FALSE:f
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "trueno");
-        RESULT = new Resultado("trueno", null); // Tipo "trueno" y temporal null
+        parser.gen("li " + temp + ", 0");
+        RESULT = new Resultado("trueno", temp);
     :};
 
 operador_binario ::= SUMA {:RESULT = new Resultado("navidad", null);:}
