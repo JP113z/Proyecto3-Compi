@@ -2134,18 +2134,29 @@ class CUP$parser$actions {
             int line2 = symbol2.left;
             int column2 = symbol2.right;
 
+            if (e1 == null) {
+                e1 = new Resultado("null", null);
+            }
+            if (e2 == null) {
+                e2 = new Resultado("null", null);
+            }
             // Obtener los tipos desde los objetos Resultado
             String tipo1 = ((Resultado) e1).tipo;
             String tipo2 = ((Resultado) e2).tipo;
 
-            // Verificar que ambos operandos sean booleanos
-            if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
-                System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                   ": Operadores lógicos requieren valores booleanos (trueno).");
-            }
+            if (tipo1.equals(null)) {
 
-            // Definir el tipo resultante
-            RESULT = new Resultado("trueno", null);
+                  RESULT = new Resultado("trueno", null);
+            } else {
+                // Verificar que ambos operandos sean booleanos
+                if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
+                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                       ": Operadores lógicos requieren valores booleanos (trueno).");
+                }
+
+                // Definir el tipo resultante
+                RESULT = new Resultado("trueno", null);
+            }
            
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
