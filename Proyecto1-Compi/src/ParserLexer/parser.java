@@ -912,6 +912,8 @@ public class parser extends java_cup.runtime.lr_parser {
 
     private int bloqueActual = 0;
 
+    private boolean dataSectionGenerated = false;
+
     StringBuffer codMIPS = new StringBuffer();
     int currentTemp = 1;
 
@@ -944,23 +946,16 @@ public class parser extends java_cup.runtime.lr_parser {
                // imprimirCodigoMIPS();
        }
 
-       public void generarSeccionData() {
-                  gen(".data");
-              }
 
-      public void declararVariable(String id, String tipo, String valor) {
-          if (tipo.equals("rodolfo")) {
-             gen(id + ": .word " + valor);
-          } else if (tipo.equals("bromista")) {
-              gen(id + ": .float " + valor);
-          } else if (tipo.equals("cometa")) {
-                 gen(id + ": .asciiz \"" + valor + "\"");
-          } else if (tipo.equals("cupido")) {
-                gen(id + ": .byte '" + valor + "'");
-           } else {
-                System.err.println("Error: Tipo de variable no soportado: " + tipo);
-            }
-      }
+       public void declararVariable(String id, String tipo, String valor) {
+         if (!dataSectionGenerated) {
+             gen(".data");  // Solo se imprime una vez al principio
+              dataSectionGenerated = true;
+         }
+         if (tipo.equals("cometa")) {
+                   gen(id + ": .asciiz \"" + valor + "\"");
+              }
+         }
 
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
@@ -1785,7 +1780,10 @@ class CUP$parser$actions {
            parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
 
-           parser.declararVariable(id.toString(), ((Resultado) t).tipo, "0");
+          String tipoVar = ((Resultado) t).tipo;
+          if (tipoVar.equals("cometa")) {
+                parser.declararVariable(id.toString(), tipoVar, " ");
+          }
            //parser.gen("sw $zero, " + id);
            //System.out.println("Generando instrucción: sw $zero, " + id);
          
@@ -1809,11 +1807,12 @@ class CUP$parser$actions {
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
 
-          String temp = ((Resultado) e).temp;
-          String valorInicial = temp != null ? temp : "0";
+        String tipoVar = ((Resultado) t).tipo;
+        String tipoExpresion = ((Resultado) e).tipo;
 
-          if (!parser.listaTablasSimbolos.get(parser.currentHash).contains(id.toString())) {
-             parser.declararVariable(id.toString(), ((Resultado) t).tipo, valorInicial);}
+        if (tipoVar.equals("cometa")) {
+            String valor = ((Resultado) e).temp;
+            parser.declararVariable(id.toString(), tipoVar, valor);}
 
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 

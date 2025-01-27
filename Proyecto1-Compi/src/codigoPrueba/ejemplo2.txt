@@ -1,10 +1,12 @@
-rodolfo _verano_ abreregalo cupido _x22_ , rodolfo _id_ , cometa _hola_ cierraregalo
+rodolfo _verano_ abreregalo cierraregalo
 abrecuento
 
 rodolfo _x_ finregalo
 rodolfo _x1_ finregalo
-
+cometa _string_ finregalo
 rodolfo _x2_ entrega 4 finregalo
+
+cometa _string2_ entrega "hola" finregalo
 
   envia 1 finregalo
   cierracuento
