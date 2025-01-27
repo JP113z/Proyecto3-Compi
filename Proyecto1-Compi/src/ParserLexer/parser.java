@@ -8,6 +8,10 @@ package ParserLexer;
 import java_cup.runtime.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Scanner;
+import java.io.File;
 import Tree.Arbol;
 import Tree.Nodo;
 import V2024.Resultado;
@@ -914,11 +918,13 @@ public class parser extends java_cup.runtime.lr_parser {
 
     private boolean dataSectionGenerated = false;
 
+    private boolean textSectionGenerated = false;
+
     StringBuffer codMIPS = new StringBuffer();
     int currentTemp = 1;
 
    public String newTemp() {
-           return "T" + currentTemp++;
+           return "$t" + currentTemp++;
        }
 
        public void gen(String instruction) {
@@ -956,6 +962,23 @@ public class parser extends java_cup.runtime.lr_parser {
                    gen(id + ": .asciiz \"" + valor + "\"");
               }
          }
+
+       public void textSection() {
+             if (!textSectionGenerated) {
+                 gen(".text");  // Solo se imprime una vez al principio
+                  textSectionGenerated = true;
+             }
+         }
+
+    public void guardarCodigoMIPS(String archivoSalida) {
+        try (FileWriter writer = new FileWriter(archivoSalida)) {
+            // Guardar el contenido del código MIPS generado
+            writer.write(codMIPS.toString());
+            System.out.println("El código MIPS ha sido guardado en el archivo: " + archivoSalida);
+        } catch (IOException e) {
+            System.err.println("Error escribiendo en el archivo: " + e.getMessage());
+        }
+    }
 
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
@@ -1309,7 +1332,7 @@ class CUP$parser$actions {
 
                     // Incrementar el contador de main
                     parser.mainCount++;
-
+                    textSection();
                     // Generar la etiqueta del main
                     parser.gen("\n# Inicio del main (_verano_)\n_verano_:");
 
@@ -1405,7 +1428,7 @@ class CUP$parser$actions {
                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
                        parser.agregarTablaSimbolos("funcion", id.toString());
                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
-
+                       textSection();
                        // Generar la etiqueta de la función
                        parser.gen("\n# Inicio de la función " + id.toString() + "\n" + id.toString() + ":");
 

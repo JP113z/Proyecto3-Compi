@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.FileWriter;
+import java.util.Scanner;
 
 
 public class MainJFlexCup {
@@ -128,6 +129,7 @@ public class MainJFlexCup {
             ParserLexer.parser myParser = new ParserLexer.parser(myLexer);
 
             System.out.println("\nIniciando análisis sintáctico...");
+
             myParser.parse();
 
             myParser.verificarMain();
@@ -137,7 +139,10 @@ public class MainJFlexCup {
                 System.out.println("\nEl archivo fuente SI puede generarse por la gramatica.");
             }
 
+          //  String nombreAsm = pedirNombreArchivoMips();
+
             myParser.imprimirTablaSimbolos();
+            //myParser.guardarCodigoMIPS(nombreAsm);
             myParser.imprimirCodigoMIPS();
 
             //System.out.println("\nÁrbol sintáctico generado:");
@@ -165,6 +170,33 @@ public class MainJFlexCup {
             System.err.println("Error escribiendo en el archivo: " + e.getMessage());
         }
     }
+
+    public static String pedirNombreArchivoMips() {
+        String rutaCompleta;
+        Scanner scanner = new Scanner(System.in);
+
+        while (true) {
+            try {
+                System.out.print("Ingrese el nombre del archivo para guardar el código MIPS (sin extensión): ");
+                rutaCompleta = scanner.nextLine();
+
+                // Validar que el nombre no esté vacío y no contenga caracteres inválidos
+                if (rutaCompleta.isEmpty()) {
+                    System.out.println("El nombre del archivo no puede estar vacío. Inténtelo nuevamente.");
+                } else if (rutaCompleta.matches(".*[<>:\"/\\\\|?*].*")) { // Validar caracteres inválidos
+                    System.out.println("El nombre del archivo contiene caracteres inválidos. Inténtelo nuevamente.");
+                } else {
+                    System.out.println("Nombre de archivo válido. Generando archivo...");
+                    break;
+                }
+            } catch (Exception e) {
+                System.err.println("Error al leer la entrada. Inténtelo nuevamente.");
+                scanner.nextLine(); // Limpiar el buffer del scanner en caso de error
+            }
+        }
+        return rutaCompleta + ".asm"; // Agregar extensión automáticamente
+    }
+
 
 }
 
