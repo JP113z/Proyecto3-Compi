@@ -130,6 +130,7 @@ public class MainJFlexCup {
             System.out.println("\nIniciando análisis sintáctico...");
             myParser.parse();
 
+            myParser.verificarMain();
             if (myParser.hasErrors()) {
                 System.out.println("\nEl archivo fuente NO puede generarse por la gramatica debido a errores.");
             } else {

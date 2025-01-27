@@ -906,6 +906,8 @@ public class parser extends java_cup.runtime.lr_parser {
 
     private int errorCount = 0;
 
+    private int mainCount = 0;
+
     private Arbol arbol;
 
     private int bloqueActual = 0;
@@ -1021,6 +1023,18 @@ public class parser extends java_cup.runtime.lr_parser {
      */
     public boolean hasErrors() {
         return errorCount > 0;
+    }
+
+    public void verificarMain() {
+        if (mainCount == 0) {
+            System.err.println("Error semántico: No se declaró ninguna función 'main' (_verano_).");
+            errorCount++;
+        } else if (mainCount > 1) {
+            System.err.println("Error semántico: Se declaró más de una función 'main' (_verano_).");
+            errorCount++;
+        } else {
+            System.out.println("Análisis correcto: Se declaró una única función 'main' (_verano_).");
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -1279,6 +1293,7 @@ class CUP$parser$actions {
                     Symbol symbol = (Symbol) CUP$parser$stack.peek();
                     parser.agregarTablaSimbolos("main", "_verano_");
                     parser.agregarVariable(symbol.left, symbol.right, "_verano_", ((Resultado) t).tipo);
+                    parser.mainCount++;
                 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$0",43, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1834,6 +1849,7 @@ class CUP$parser$actions {
 		int expright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object exp = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
+                // Obtener el símbolo para extraer línea y columna
                 Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
                 int line = symbol.left;
                 int column = symbol.right;
@@ -1845,6 +1861,8 @@ class CUP$parser$actions {
                 // Obtener el tipo y temporal de la expresión
                 Resultado resultadoExp = (Resultado) exp;
                 String tipoExpresion = resultadoExp.tipo;
+                String tempExpresion = resultadoExp.temp;
+
                 // Validar tipos
                 if (!tipoIdentificador.equals(tipoExpresion)) {
                     System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
@@ -1855,9 +1873,13 @@ class CUP$parser$actions {
                                        "' con valor de tipo '" + tipoExpresion + "'.");
 
                     // Generación de código MIPS
-                    String temp = parser.newTemp();
-                    parser.gen("la " + temp + ", " + resultadoExp.temp);  // Cargar el valor de la expresión al temporal
-                    parser.gen("sw " + temp + ", " + id);  // Guardar el valor en la variable
+                    if (tempExpresion != null) {
+                        parser.gen("la $t0, " + id);
+                        parser.gen("lw $t1, " + tempExpresion);
+                        parser.gen("sw $t1, 0($t0)");
+                    } else {
+                        System.err.println("Error: El temporal de la expresión es null.");
+                    }
                 }
               
               CUP$parser$result = parser.getSymbolFactory().newSymbol("asignacion",6, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1940,32 +1962,40 @@ class CUP$parser$actions {
 		int opright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object op = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-               // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
-               Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
-               int line = symbol.left;
-               int column = symbol.right;
+                 // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
+                 Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+                 int line = symbol.left;
+                 int column = symbol.right;
 
-               // Obtener el tipo de la expresión
-               String tipo = ((Resultado) e1).tipo;
+                 // Obtener el tipo y el temporal de la expresión
+                 Resultado resultadoE1 = (Resultado) e1;
+                 String tipo = resultadoE1.tipo;
+                 String tempE1 = resultadoE1.temp;
 
-               // Validar tipos para operadores unarios
-               if (op.toString().equals("quien") || op.toString().equals("grinch")) {
-                   if (!tipo.equals("rodolfo")) {
-                       System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                          ": Incremento/Decremento solo aplica a enteros (rodolfo).");
-                   }
-               } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
-                   System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                      ": Negación solo aplica a enteros o flotantes.");
-               }
+                 // Validar tipos para operadores unarios
+                 if (op.toString().equals("quien") || op.toString().equals("grinch")) {
+                     if (!tipo.equals("rodolfo")) {
+                         System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                            ": Incremento/Decremento solo aplica a enteros (rodolfo).");
+                     }
+                 } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
+                     System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                        ": Negación solo aplica a enteros o flotantes.");
+                 }
 
-               // Generar el temporal para la operación unaria
-               String temp = parser.newTemp();
-               // Aquí no se genera código MIPS todavía, pero podrías hacerlo después
+                 // Generar el temporal para la operación unaria
+                 String tempResultado = parser.newTemp();
 
-               // Asignar el resultado con el tipo y el temporal generado
-               RESULT = new Resultado(tipo, temp);
-           
+                 // Generación de código MIPS para los operadores unarios
+                 if (op.toString().equals("-")) { // Negación
+                     parser.gen("neg " + tempResultado + ", " + tempE1); // Negar el valor del temporal
+                 } else if (op.toString().equals("quien")) { // Incremento
+                     parser.gen("addi " + tempResultado + ", " + tempE1 + ", 1"); // Incrementar en 1
+                 } else if (op.toString().equals("grinch")) { // Decremento
+                     parser.gen("subi " + tempResultado + ", " + tempE1 + ", 1"); // Decrementar en 1
+                 }
+                 RESULT = new Resultado(tipo, tempResultado);
+             
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2086,6 +2116,12 @@ class CUP$parser$actions {
                 int column2 = symbol2.right;
                 String operador = ((Resultado) op).tipo;
                 // Obtener los tipos desde los objetos Resultado
+                if (e1 == null) {
+                    e1 = new Resultado("null", null);
+                }
+                if (e2 == null) {
+                    e2 = new Resultado("null", null);
+                }
                 String tipo1 = ((Resultado) e1).tipo;
                 String tipo2 = ((Resultado) e2).tipo;
 
@@ -2100,8 +2136,23 @@ class CUP$parser$actions {
                         System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                            ": Tipos incompatibles para operador '" + operador + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
                     } else {
-                        // Asignar el tipo resultante para comparaciones lógicas
-                        RESULT = new Resultado("trueno", null);
+                    // Asignar el tipo resultante para comparaciones relacionales
+                    String temp1 = ((Resultado) e1).temp;
+                    String temp2 = ((Resultado) e2).temp;
+                    String tempResultado = parser.newTemp();
+
+                    // Generación de código MIPS para la comparación
+                    switch (operador) {
+                        case "mary": // Igualdad
+                            parser.gen("seq " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "openslae": // Diferente
+                            parser.gen("sne " + tempResultado + ", " + temp1 + ", " + temp2);
+                        default:
+                            System.err.println("Error: Operador relacional no soportado.");
+                    }
+                    // Asignar el resultado con el tipo booleano (trueno) y el temporal generado
+                    RESULT = new Resultado("trueno", tempResultado);
                     }
                 } else {
                     // Validación para otros operadores relacionales
@@ -2114,7 +2165,30 @@ class CUP$parser$actions {
                                            ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
                     } else {
                         // Asignar el tipo resultante para comparaciones relacionales
-                        RESULT = new Resultado("trueno", null);
+                    String temp1 = ((Resultado) e1).temp;
+                    String temp2 = ((Resultado) e2).temp;
+                    String tempResultado = parser.newTemp();
+
+                    // Generación de código MIPS para la comparación
+                    switch (operador) {
+                        case "snowball": // Menor que
+                            parser.gen("slt " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "evergreen": // Menor o igual
+                            parser.gen("sle " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "minstix": // Mayor que
+                            parser.gen("sgt " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "upatree": // Mayor o igual
+                            parser.gen("sge " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        default:
+                            System.err.println("Error: Operador relacional no soportado.");
+                    }
+
+                    // Asignar el resultado con el tipo booleano (trueno) y el temporal generado
+                    RESULT = new Resultado("trueno", tempResultado);
                     }
                 }
              
@@ -2136,38 +2210,51 @@ class CUP$parser$actions {
 		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-            // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
-            Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
-            Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
-            int line1 = symbol1.left;
-            int column1 = symbol1.right;
-            int line2 = symbol2.left;
-            int column2 = symbol2.right;
+                       // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
+                       Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                       Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                       int line1 = symbol1.left;
+                       int column1 = symbol1.right;
+                       int line2 = symbol2.left;
+                       int column2 = symbol2.right;
 
-            if (e1 == null) {
-                e1 = new Resultado("null", null);
-            }
-            if (e2 == null) {
-                e2 = new Resultado("null", null);
-            }
-            // Obtener los tipos desde los objetos Resultado
-            String tipo1 = ((Resultado) e1).tipo;
-            String tipo2 = ((Resultado) e2).tipo;
+                       // Validar que `e1` y `e2` no sean nulos
+                       if (e1 == null) {
+                           e1 = new Resultado("null", null);
+                       }
+                       if (e2 == null) {
+                           e2 = new Resultado("null", null);
+                       }
 
-            if (tipo1.equals(null)) {
+                       // Obtener los tipos desde los objetos Resultado
+                       String tipo1 = ((Resultado) e1).tipo;
+                       String tipo2 = ((Resultado) e2).tipo;
 
-                  RESULT = new Resultado("trueno", null);
-            } else {
-                // Verificar que ambos operandos sean booleanos
-                if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
-                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                       ": Operadores lógicos requieren valores booleanos (trueno).");
-                }
+                       // Verificar que ambos operandos sean booleanos
+                       if (!tipo1.equals("trueno") || !tipo2.equals("trueno")) {
+                           System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                              ": Operadores lógicos requieren valores booleanos (trueno).");
+                       } else {
+                           // Generar código MIPS para operadores lógicos
+                           String temp1 = ((Resultado) e1).temp;
+                           String temp2 = ((Resultado) e2).temp;
+                           String tempResultado = parser.newTemp();
 
-                // Definir el tipo resultante
-                RESULT = new Resultado("trueno", null);
-            }
-           
+                           switch (((Resultado) op).tipo) {
+                               case "melchor": // AND lógico
+                                   parser.gen("and " + tempResultado + ", " + temp1 + ", " + temp2);
+                                   break;
+                               case "gaspar": // OR lógico
+                                   parser.gen("or " + tempResultado + ", " + temp1 + ", " + temp2);
+                                   break;
+                               default:
+                                   System.err.println("Error: Operador lógico no soportado.");
+                           }
+
+                           // Asignar el resultado con el tipo booleano (trueno) y el temporal generado
+                           RESULT = new Resultado("trueno", tempResultado);
+                       }
+         
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2179,7 +2266,18 @@ class CUP$parser$actions {
 		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+               Symbol symbol = (Symbol) CUP$parser$stack.peek();
+               int line = symbol.left;
+               int column = symbol.right;
 
+                String temp = parser.newTemp();
+                         String tempExpr = ((Resultado) e).temp;
+                         String tempResultado = parser.newTemp();
+
+                         parser.gen("not " + temp + ", " + tempExpr);
+                         RESULT = new Resultado("trueno", temp);
+         
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2704,9 +2802,13 @@ class CUP$parser$actions {
 		
                          Symbol symbol = (Symbol) CUP$parser$stack.peek();
                          parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+
+                         // Validación del tipo permitido
                          if (!((Resultado) t).tipo.equals("rodolfo") && !((Resultado) t).tipo.equals("cupido")) {
                              System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                                  ": Solo se permiten variables de tipo 'rodolfo' (int) o 'cupido' (char).");
+                         } else {
+                             System.out.println("Declaración válida: arreglo '" + id + "' de tipo '" + ((Resultado) t).tipo + "'.");
                          }
                       
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -2741,18 +2843,26 @@ class CUP$parser$actions {
 		
                     Symbol symbol = (Symbol) CUP$parser$stack.peek();
                     parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+
                     String tipoExpresion = (e instanceof Resultado)
                         ? ((Resultado) e).tipo
                         : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+
+                    // Validación de compatibilidad de tipos
                     if (!((Resultado) t).tipo.equals(tipoExpresion)) {
                         System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                            ": Incompatibilidad de tipos. La variable '" + id + "' es de tipo '" + ((Resultado) t).tipo +
                                            "', pero se le asignó una expresión de tipo '" + tipoExpresion + "'.");
-                     }
-                     if (!((Resultado) t).tipo.equals("rodolfo") && !((Resultado) t).tipo.equals("cupido")) {
+                    } else if (!((Resultado) t).tipo.equals("rodolfo") && !((Resultado) t).tipo.equals("cupido")) {
                          System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
                                              ": Solo se permiten asignaciones a variables de tipo 'rodolfo' (int) o 'cupido' (char).");
-                     }
+                    } else {
+                        // Generación de código MIPS para asignación
+                        String temp = ((Resultado) e).temp;
+                        parser.gen("la $t0, " + id);
+                        parser.gen("sw " + temp + ", 0($t0)");
+                        System.out.println("Asignación a arreglo válida: '" + id + "'.");
+                    }
                   
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2771,6 +2881,7 @@ class CUP$parser$actions {
 		
                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
                         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+                        System.out.println("Declaración y asignación de arreglo inicializado: '" + id + "'.");
                     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-6)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2791,6 +2902,15 @@ class CUP$parser$actions {
                         String tipoExpresion = (e instanceof Resultado)
                             ? ((Resultado) e).tipo
                             : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), symbol.left, symbol.right);
+                        if (tipoExpresion != null) {
+                            String temp = ((Resultado) e).temp;
+                            parser.gen("la $t0, " + id);
+                            parser.gen("sw " + temp + ", 0($t0)");
+                            System.out.println("Asignación directa a arreglo válida: '" + id + "'.");
+                        } else {
+                            System.err.println("Error semántico en línea " + (symbol.left + 1) + ", columna " + (symbol.right + 1) +
+                                               ": El valor asignado al arreglo no tiene un tipo válido.");
+                        }
                     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2810,8 +2930,9 @@ class CUP$parser$actions {
             {
               Object RESULT =null;
 
-                            RESULT = new Resultado(",", null);
-                        
+                              // Generar un resultado con el separador de coma para unir parámetros
+                              RESULT = new Resultado(",", null);
+                          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$5",48, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2826,8 +2947,17 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                            RESULT = e;
-                        
+                              // Validar y asignar el resultado de la expresión
+                              if (e instanceof Resultado) {
+                                  Resultado resExp = (Resultado) e;
+                                  if (resExp.tipo == null) {
+                                      System.err.println("Error semantico: La expresión del parámetro no tiene un tipo válido.");
+                                  }
+                                  RESULT = resExp;
+                              } else {
+                                  System.err.println("Error semantico: El resultado de la expresión no es válido.");
+                              }
+                          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("parametrosArreglosAux",34, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2840,8 +2970,17 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                            RESULT = e;
-                        
+                              // Validar y asignar el resultado de la expresión directamente
+                              if (e instanceof Resultado) {
+                                  Resultado resExp = (Resultado) e;
+                                  if (resExp.tipo == null) {
+                                      System.err.println("Error semantico: La expresión del parámetro no tiene un tipo válido.");
+                                  }
+                                  RESULT = resExp;
+                              } else {
+                                  System.err.println("Error semantico: El resultado de la expresión no es válido.");
+                              }
+                          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("parametrosArreglosAux",34, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2887,7 +3026,16 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 
-                        RESULT = e;
+                        if (e instanceof Resultado) {
+                            Resultado resExp = (Resultado) e;
+                            if (!"rodolfo".equals(resExp.tipo)) {
+                                System.err.println("Error semántico: El índice del arreglo debe ser un entero (rodolfo), pero se encontró '" + resExp.tipo + "'.");
+                            }
+                            RESULT = resExp;
+                        } else {
+                            System.err.println("Error semántico: Expresión inválida en el índice del arreglo.");
+                            RESULT = new Resultado("null", null);
+                        }
                     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$7",50, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2914,7 +3062,9 @@ class CUP$parser$actions {
             {
               Object RESULT =null;
 		
-                        RESULT = null;
+                        // Manejo de error en el índice del arreglo
+                        System.err.println("Error sintáctico: Índice del arreglo inválido.");
+                        RESULT = new Resultado("null", null); // Manejo seguro para errores
                     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("acceso_arreglo",24, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -3001,9 +3151,18 @@ class CUP$parser$actions {
                                ": La función '" + id + "' no está declarada en ninguna tabla de símbolos.");
             RESULT = new Resultado("null", null);
         } else {
-            // Si es válida, asignar el tipo y dejar el temp como null (porque no estamos generando MIPS aún)
+            // Generar un temporal para almacenar el resultado de la función (si no es void)
+            String tempResultado = null;
+            if (!tipoFuncion.equals("void")) {
+                tempResultado = parser.newTemp();
+                parser.gen("jal " + id);  // Llamada a la función
+                parser.gen("move " + tempResultado + ", $v0");
+            } else {
+                parser.gen("jal " + id);
+            }
+
             System.out.println("Invocación válida: " + id + " de tipo: " + tipoFuncion);
-            RESULT = new Resultado(tipoFuncion, null);
+            RESULT = new Resultado(tipoFuncion, tempResultado);
         }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("llamada_funcion",25, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -3102,14 +3261,22 @@ class CUP$parser$actions {
                 Symbol symbol = (Symbol) CUP$parser$stack.peek();
                 int line = symbol.left;
                 int column = symbol.right;
+
                 // Obtener el tipo de la función actual usando `currentHash`
-                // Verificar si `e` es nulo
+                String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, line, column);
+
                 if (e == null) {
-                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                       ": El retorno no contiene una expresión válida.");
+                    // Manejo de RETURN sin expresión
+                    if (!tipoFuncion.equals("void")) {
+                        System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                           ": La función requiere un valor de retorno de tipo '" + tipoFuncion + "', pero se encontró 'void'.");
+                    } else {
+                        System.out.println("Retorno válido: void en función de tipo void.");
+                        parser.gen("jr $ra");  // Retornar a la dirección de retorno en MIPS
+                        RESULT = new Resultado("void", null);
+                    }
                 } else {
-                    // Obtener el tipo y temporal de la expresión de retorno
-                    String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, line, column);
+                    // Manejo de RETURN con expresión
                     Resultado resultadoExpresion = (Resultado) e;
                     String tipoExpresion = resultadoExpresion.tipo;
 
@@ -3117,6 +3284,16 @@ class CUP$parser$actions {
                     if (!tipoFuncion.equals(tipoExpresion)) {
                         System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                            ": Tipo de retorno (" + tipoExpresion + ") no coincide con el tipo de la función (" + tipoFuncion + ").");
+                    } else {
+                        System.out.println("Retorno válido: tipo '" + tipoExpresion + "'.");
+
+                        // Generar código MIPS para mover el valor de retorno a $v0
+                        if (resultadoExpresion.temp != null) {
+                            parser.gen("move $v0, " + resultadoExpresion.temp);
+                        } else {
+                            System.err.println("Error: El temporal para el valor de retorno es null.");
+                        }
+                        parser.gen("jr $ra");  // Retornar a la dirección de retorno en MIPS
                     }
 
                     RESULT = new Resultado(tipoExpresion, resultadoExpresion.temp);
@@ -3130,7 +3307,22 @@ class CUP$parser$actions {
           case 144: // return_stmt ::= RETURN 
             {
               Object RESULT =null;
+		
+                    Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                    int line = symbol.left;
+                    int column = symbol.right;
 
+                    String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, line, column);
+
+                    if (!tipoFuncion.equals("void")) {
+                        System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                           ": La función requiere un valor de retorno de tipo '" + tipoFuncion + "', pero se encontró 'void'.");
+                    } else {
+                        System.out.println("Retorno válido en función de tipo void.");
+                        parser.gen("jr $ra");
+                        RESULT = new Resultado("void", null);
+                    }
+                
               CUP$parser$result = parser.getSymbolFactory().newSymbol("return_stmt",29, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -3139,7 +3331,10 @@ class CUP$parser$actions {
           case 145: // return_stmt ::= RETURN error 
             {
               Object RESULT =null;
-
+		
+                    System.err.println("Error: Retorno inválido.");
+                    RESULT = new Resultado("null", null);
+                
               CUP$parser$result = parser.getSymbolFactory().newSymbol("return_stmt",29, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
