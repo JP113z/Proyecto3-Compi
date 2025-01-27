@@ -1311,8 +1311,18 @@ class CUP$parser$actions {
                     Symbol symbol = (Symbol) CUP$parser$stack.peek();
                     parser.agregarTablaSimbolos("main", "_verano_");
                     parser.agregarVariable(symbol.left, symbol.right, "_verano_", ((Resultado) t).tipo);
+
+                    // Incrementar el contador de main
                     parser.mainCount++;
-                    parser.generarSeccionData();
+
+                    // Generar la etiqueta del main
+                    parser.gen("\n# Inicio del main (_verano_)\n_verano_:");
+
+                    // Guardar el valor de retorno y marco de pila
+                    parser.gen("addi $sp, $sp, -8");  // Reservar espacio para $ra y $fp
+                    parser.gen("sw $ra, 4($sp)");    // Guardar $ra en la pila
+                    parser.gen("sw $fp, 0($sp)");    // Guardar $fp en la pila
+                    parser.gen("move $fp, $sp");    // Actualizar el marco de pila
                 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$0",43, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1327,7 +1337,16 @@ class CUP$parser$actions {
 		int tleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).left;
 		int tright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
 		Object t = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
-
+		
+                    // Restaurar registros y finalizar el programa
+                    parser.gen("\n# Fin del main (_verano_)");
+                    parser.gen("move $sp, $fp");
+                    parser.gen("lw $ra, 4($sp)");  // Restaurar $ra
+                    parser.gen("lw $fp, 0($sp)");  // Restaurar $fp
+                    parser.gen("addi $sp, $sp, 8"); // Restaurar el espacio en la pila
+                    parser.gen("li $v0, 10");       // Syscall para terminar el programa
+                    parser.gen("syscall");
+                
               CUP$parser$result = parser.getSymbolFactory().newSymbol("cabecera_main",36, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1391,6 +1410,15 @@ class CUP$parser$actions {
                        Symbol symbol = (Symbol) CUP$parser$stack.peek();
                        parser.agregarTablaSimbolos("funcion", id.toString());
                        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+
+                       // Generar la etiqueta de la función
+                       parser.gen("\n# Inicio de la función " + id.toString() + "\n" + id.toString() + ":");
+
+                       // Guardar el valor de retorno y marco de pila
+                       parser.gen("addi $sp, $sp, -8");  // Reservar espacio para $ra y $fp
+                       parser.gen("sw $ra, 4($sp)");    // Guardar $ra en la pila
+                       parser.gen("sw $fp, 0($sp)");    // Guardar $fp en la pila
+                       parser.gen("move $fp, $sp");    // Actualizar el marco de pila
                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$1",44, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1408,7 +1436,15 @@ class CUP$parser$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
-
+		
+                       // Restaurar registros y salir de la función
+                       parser.gen("\n# Fin de la función " + id.toString());
+                       parser.gen("move $sp, $fp");
+                       parser.gen("lw $ra, 4($sp)");  // Restaurar $ra
+                       parser.gen("lw $fp, 0($sp)");  // Restaurar $fp
+                       parser.gen("addi $sp, $sp, 8"); // Restaurar el espacio en la pila
+                       parser.gen("jr $ra");          // Regresar al llamador
+                   
               CUP$parser$result = parser.getSymbolFactory().newSymbol("cabecera_funcion",37, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
