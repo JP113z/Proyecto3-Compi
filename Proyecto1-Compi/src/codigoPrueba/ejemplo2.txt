@@ -1,9 +1,10 @@
-rodolfo _funcion_ abreregalo cupido _x22_ , rodolfo _id_ , cometa _hola_ cierraregalo
+rodolfo _verano_ abreregalo cupido _x22_ , rodolfo _id_ , cometa _hola_ cierraregalo
 abrecuento
 
-rodolfo _x_ entrega 3 finregalo
-
 rodolfo _x_ finregalo
+rodolfo _x1_ finregalo
+
+rodolfo _x2_ entrega 4 finregalo
 
   envia 1 finregalo
   cierracuento

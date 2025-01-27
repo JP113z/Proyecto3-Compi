@@ -51,6 +51,24 @@ parser code {:
                // imprimirCodigoMIPS();
        }
 
+       public void generarSeccionData() {
+                  gen(".data");
+              }
+
+      public void declararVariable(String id, String tipo, String valor) {
+          if (tipo.equals("rodolfo")) {
+             gen(id + ": .word " + valor);
+          } else if (tipo.equals("bromista")) {
+              gen(id + ": .float " + valor);
+          } else if (tipo.equals("cometa")) {
+                 gen(id + ": .asciiz \"" + valor + "\"");
+          } else if (tipo.equals("cupido")) {
+                gen(id + ": .byte '" + valor + "'");
+           } else {
+                System.err.println("Error: Tipo de variable no soportado: " + tipo);
+            }
+      }
+
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
@@ -290,6 +308,7 @@ cabecera_main ::= tipo:t MAIN
                     parser.agregarTablaSimbolos("main", "_verano_");
                     parser.agregarVariable(symbol.left, symbol.right, "_verano_", ((Resultado) t).tipo);
                     parser.mainCount++;
+                    parser.generarSeccionData();
                 :} declaracion_main
                 | error MAIN PARENTESISAPERTURA PARENTESISCIERRE bloque;
 
@@ -423,12 +442,21 @@ declaracion ::= tipo:t IDENTIFICADOR:id
            Symbol symbol = (Symbol) CUP$parser$stack.peek();
            parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
-           parser.gen("sw $zero, " + id);
-           System.out.println("Generando instrucción: sw $zero, " + id);
+
+           parser.declararVariable(id.toString(), ((Resultado) t).tipo, "0");
+           //parser.gen("sw $zero, " + id);
+           //System.out.println("Generando instrucción: sw $zero, " + id);
          :}
     | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+
+          String temp = ((Resultado) e).temp;
+          String valorInicial = temp != null ? temp : "0";
+
+          if (!parser.listaTablasSimbolos.get(parser.currentHash).contains(id.toString())) {
+             parser.declararVariable(id.toString(), ((Resultado) t).tipo, valorInicial);}
+
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
         int line = symbol.left;
@@ -442,11 +470,11 @@ declaracion ::= tipo:t IDENTIFICADOR:id
             System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
                                "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
 
-            String temp = ((Resultado) e).temp;
-            parser.gen("la $t0, " + id);
-            parser.gen("lw $t1, " + temp);
-            parser.gen("sw $t1, 0($t0)");
-            System.out.println("Generando instrucción: sw $t1, 0($t0)");
+           // String temp = ((Resultado) e).temp;
+            //parser.gen("la $t0, " + id);
+            //parser.gen("lw $t1, " + temp);
+            //parser.gen("sw $t1, 0($t0)");
+            //System.out.println("Generando instrucción: sw $t1, 0($t0)");
         }
     :}
     | arreglo
