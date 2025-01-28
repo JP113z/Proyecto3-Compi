@@ -40,11 +40,11 @@ Token: 13, Lexema: _x22_, Línea: 11, Columna: 20
 Token: 27, Lexema: evergreen, Línea: 11, Columna: 26
 Token: 8, Lexema: 45, Línea: 11, Columna: 36
 Token: 32, Lexema: melchor, Línea: 11, Columna: 39
-Token: 13, Lexema: _var_, Línea: 11, Columna: 47
-Token: 28, Lexema: minstix, Línea: 11, Columna: 53
-Token: 9, Lexema: 5.6, Línea: 11, Columna: 61
-Token: 22, Lexema: cierraregalo, Línea: 11, Columna: 65
-Token: 14, Lexema: abrecuento, Línea: 11, Columna: 79
+Token: 8, Lexema: 7, Línea: 11, Columna: 47
+Token: 28, Lexema: minstix, Línea: 11, Columna: 49
+Token: 9, Lexema: 5.6, Línea: 11, Columna: 57
+Token: 22, Lexema: cierraregalo, Línea: 11, Columna: 61
+Token: 14, Lexema: abrecuento, Línea: 11, Columna: 75
 Token: 7, Lexema: cupido, Línea: 14, Columna: 4
 Token: 13, Lexema: _ch33_, Línea: 14, Columna: 12
 Token: 20, Lexema: entrega, Línea: 14, Columna: 19

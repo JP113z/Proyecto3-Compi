@@ -8,7 +8,7 @@ bromista  _func1_  abreregalo  cupido  _x22_ ,   cupido  _x22_ cierraregalo   ab
 	 trueno  _x40_ entrega false finregalo
 	 cupido  _x50_ abreempaque 1000 cierraempaque  finregalo
 	 cometa  _x50_ entrega "Hola a todos los que est abreempaque a cierraempaque  haciendo un compilador nuevo\n" finregalo
-	 elfo  abreregalo _x22_ evergreen 45 melchor _var_ minstix 5.6 cierraregalo  abrecuento  #semantico x22 ,  var
+	 elfo  abreregalo _x22_ evergreen 45 melchor minstix 5.6 cierraregalo  abrecuento  #semantico x22 ,  var
 		#rodolfo  _y_ finregalo
 		#_x22_ entrega 10 finregalo
 		 cupido  _ch33_ entrega 'a' finregalo 

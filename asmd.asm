@@ -1,9 +1,9 @@
 .data
 _string_8: .asciiz "Hola a todos los que est abreempaque a cierraempaque  haciendo un compilador nuevo\n"
 _x50_: .asciiz "Hola a todos los que est abreempaque a cierraempaque  haciendo un compilador nuevo\n"
-_string_16: .asciiz "sdff"
+_string_14: .asciiz "sdff"
 _str2_: .asciiz "sdff"
-_string_25: .asciiz "Hola mundo"
+_string_23: .asciiz "Hola mundo"
 _b1_: .asciiz " "
 
 .text
@@ -29,26 +29,24 @@ li $v0, 4
 syscall
 lw $t9, _x22_
 li $t10, 45
-lw $t11, _var_
-li.s $t12, 5.6
-li $t13, 'a'
-move $t14, $t13
-li $t15, 0
+li $t11, 'a'
+move $t12, $t11
+li $t13, 0
 la $a0, _str2_
 li $v0, 4
 syscall
-li $t17, 0
-lw $t18, _i_
-li $t19, 4
-lw $t20, _j_
+li $t15, 0
+lw $t16, _i_
+li $t17, 4
+lw $t18, _j_
+lw $t20, _i_
 lw $t22, _i_
-lw $t24, _i_
-move $a0, _string_25
+move $a0, _string_23
 li $v0, 4
 syscall
-lw $t26, _x22_
-li.s $t27, -5.6
-move $v0, $t27
+lw $t24, _x22_
+li.s $t25, -5.6
+move $v0, $t25
 jr $ra
 
 # Fin de la función _func1_
@@ -78,8 +76,8 @@ addi $sp, $sp, -8
 sw $ra, 4($sp)
 sw $fp, 0($sp)
 move $fp, $sp
-lw $t28, _b1_
-move $v0, $t28
+lw $t26, _b1_
+move $v0, $t26
 jr $ra
 
 # Fin de la función _func3_
@@ -95,48 +93,48 @@ addi $sp, $sp, -8
 sw $ra, 4($sp)
 sw $fp, 0($sp)
 move $fp, $sp
-li $t29, 0
-li.s $t30, 56.6
-move $t29, $t30
-lw $t31, _fl1_
-li $t33, -14
-lw $t34, _in1_
-li $t36, 7
-li $t37, 15
-sub $t38, $t36, $t37
+li $t27, 0
+li.s $t28, 56.6
+move $t27, $t28
+lw $t29, _fl1_
+li $t31, -14
+lw $t32, _in1_
+li $t34, 7
+li $t35, 15
+sub $t36, $t34, $t35
 la $t0, resultado
-lw $t1, $t38
+lw $t1, $t36
 sw $t1, 0($t0)
-div $t33, $t40
-mflo $t41
+div $t31, $t38
+mflo $t39
 la $t0, resultado
-lw $t1, $t41
+lw $t1, $t39
 sw $t1, 0($t0)
-move $t44, $t43
-li.s $t45, 3.7
-lw $t46, _fl1_
-li.s $t47, 45.6
-li $t48, 76
-add $t50, $t46, $t49
+move $t42, $t41
+li.s $t43, 3.7
+lw $t44, _fl1_
+li.s $t45, 45.6
+li $t46, 76
+add $t48, $t44, $t47
+la $t0, resultado
+lw $t1, $t48
+sw $t1, 0($t0)
 la $t0, resultado
 lw $t1, $t50
 sw $t1, 0($t0)
-la $t0, resultado
-lw $t1, $t52
-sw $t1, 0($t0)
-move $t54, $t53
-li $t55, 10
-li.s $t56, 4.5
-lw $t57, _miChar_
-li.s $t58, -0.005
+move $t52, $t51
+li $t53, 10
+li.s $t54, 4.5
+lw $t55, _miChar_
+li.s $t56, -0.005
 la $t0, _fl1_
-lw $t1, $t60
+lw $t1, $t58
 sw $t1, 0($t0)
-li $t61, 'a'
-li.s $t62, 6.7
-li.s $t63, 8.9
-move $t65, $t64
-lw $t66, _bl1_
+li $t59, 'a'
+li.s $t60, 6.7
+li.s $t61, 8.9
+move $t63, $t62
+lw $t64, _bl1_
 
 # Fin del main (_verano_)
 move $sp, $fp

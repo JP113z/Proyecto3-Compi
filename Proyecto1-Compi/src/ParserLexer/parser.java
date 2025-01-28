@@ -978,6 +978,10 @@ public class parser extends java_cup.runtime.lr_parser {
                  textSectionGenerated = true;
                  textSectionGenerated = true;
            }
+           if (!dataSectionGenerated) {
+                dataSection.append(".data\n"); // Asegurarse de que la sección .data se genere al inicio
+                dataSectionGenerated = true;
+           }
          }
 
     private Map<String, String> variableToRegister = new HashMap<>();
