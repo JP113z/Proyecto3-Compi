@@ -921,6 +921,7 @@ public class parser extends java_cup.runtime.lr_parser {
     private boolean textSectionGenerated = false;
 
     StringBuffer codMIPS = new StringBuffer();
+    StringBuffer dataSection = new StringBuffer();
     int currentTemp = 1;
 
    public String newTemp() {
@@ -933,12 +934,15 @@ public class parser extends java_cup.runtime.lr_parser {
           }
 
         public void imprimirCodigoMIPS() {
-               if (codMIPS.length() == 0) {
-                   System.out.println("No se generaron instrucciones MIPS.");
-               } else {
-                   System.out.println("\n\nCÓDIGO MIPS");
-                   System.out.println(codMIPS.toString());
-               }
+            StringBuilder codigoCompleto = new StringBuilder();
+            if (dataSectionGenerated) {
+                codigoCompleto.append(dataSection.toString()).append("\n");
+            }
+            if (textSectionGenerated) {
+                codigoCompleto.append(codMIPS.toString());
+            }
+            System.out.println("\n\nCÓDIGO MIPS:");
+            System.out.println(codigoCompleto.toString());
         }
 
         public void asignarCodigoMIPS(String id, String temp) {
@@ -952,23 +956,43 @@ public class parser extends java_cup.runtime.lr_parser {
                // imprimirCodigoMIPS();
        }
 
+        public void declararString(String id, String valor) {
+            if (!dataSectionGenerated) {
+                dataSection.append(".data\n"); // Asegurarse de que la sección .data se genere al inicio
+                dataSectionGenerated = true;
+            }
+            dataSection.append(id + ": .asciiz \"" + valor + "\"\n");}
 
-       public void declararVariable(String id, String tipo, String valor) {
-         if (!dataSectionGenerated) {
-             gen(".data");  // Solo se imprime una vez al principio
-              dataSectionGenerated = true;
-         }
-         if (tipo.equals("cometa")) {
-                   gen(id + ": .asciiz \"" + valor + "\"");
-              }
-         }
+
+        public void usarString(String id, String registro) {
+            gen("la " + registro + ", " + id); // Cargar la dirección del string en un registro
+        }
 
        public void textSection() {
-             if (!textSectionGenerated) {
-                 gen(".text");  // Solo se imprime una vez al principio
-                  textSectionGenerated = true;
-             }
+           if (!textSectionGenerated) {
+                 gen(".text");
+                 gen(".globl main");
+                 gen("main:");
+                 gen("j _verano_");
+                 textSectionGenerated = true;
+                 textSectionGenerated = true;
+           }
          }
+
+    public String obtenerValorString(String id) {
+        // Buscar el string declarado en .data y devolver su valor
+        String data = dataSection.toString();
+        for (String line : data.split("\n")) {
+            if (line.startsWith(id + ":")) {
+                int start = line.indexOf("\"") + 1;
+                int end = line.lastIndexOf("\"");
+                if (start > 0 && end > start) {
+                    return line.substring(start, end);
+                }
+            }
+        }
+        return ""; // Retornar vacío si no se encuentra
+    }
 
     public void guardarCodigoMIPS(String archivoSalida) {
         try (FileWriter writer = new FileWriter(archivoSalida)) {
@@ -1799,17 +1823,18 @@ class CUP$parser$actions {
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-           Symbol symbol = (Symbol) CUP$parser$stack.peek();
-           parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+        Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
-
-          String tipoVar = ((Resultado) t).tipo;
-          if (tipoVar.equals("cometa")) {
-                parser.declararVariable(id.toString(), tipoVar, " ");
-          }
-           //parser.gen("sw $zero, " + id);
-           //System.out.println("Generando instrucción: sw $zero, " + id);
-         
+        String tipoVar = ((Resultado) t).tipo;
+        if (tipoVar.equals("cometa")) {
+            // Declarar el string en .data
+            parser.declararString(id.toString(), " ");
+        } else {
+            // Declarar otras variables
+            parser.gen("sw $zero, " + id);
+        }
+    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -1834,11 +1859,23 @@ class CUP$parser$actions {
         String tipoExpresion = ((Resultado) e).tipo;
 
         if (tipoVar.equals("cometa")) {
-            String valor = ((Resultado) e).temp;
-            parser.declararVariable(id.toString(), tipoVar, valor);}
+            // Usar el identificador del string directamente
+            String idString = ((Resultado) e).temp;
 
-        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+            // Declarar el string (si aún no existe) en .data
+            parser.declararString(id.toString(), parser.obtenerValorString(idString));
 
+            // Referenciarlo en .text
+            parser.gen("la $a0, " + id.toString()); // Cargar la dirección del string
+            parser.gen("li $v0, 4");     // Syscall para imprimir cadenas
+            parser.gen("syscall");
+        } else {
+            // Declarar y asignar otras variables
+            parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+            parser.gen("sw $zero, " + id);
+        }
+
+        // Validación semántica de tipos
         int line = symbol.left;
         int column = symbol.right;
 
@@ -1849,12 +1886,6 @@ class CUP$parser$actions {
         } else {
             System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
                                "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
-
-           // String temp = ((Resultado) e).temp;
-            //parser.gen("la $t0, " + id);
-            //parser.gen("lw $t1, " + temp);
-            //parser.gen("sw $t1, 0($t0)");
-            //System.out.println("Generando instrucción: sw $t1, 0($t0)");
         }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1948,7 +1979,6 @@ class CUP$parser$actions {
                 Resultado resultadoExp = (Resultado) exp;
                 String tipoExpresion = resultadoExp.tipo;
                 String tempExpresion = resultadoExp.temp;
-
                 // Validar tipos
                 if (!tipoIdentificador.equals(tipoExpresion)) {
                     System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
@@ -2433,12 +2463,15 @@ class CUP$parser$actions {
 		int sright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object s = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        String temp = parser.newTemp();
-        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "cometa");
-        parser.gen("la " + temp + ", " + symbol.value);
-        RESULT = new Resultado("cometa", temp);
-    
+              Symbol symbol = (Symbol) CUP$parser$stack.peek();
+              String id = "_string_" + parser.currentTemp++;  // Generar un identificador único válido
+
+              // Declarar el string en la sección .data con el valor correcto
+              parser.declararString(id, symbol.value.toString());
+
+              // Devolver un resultado con el tipo y el identificador del string
+              RESULT = new Resultado("cometa", id);
+          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
