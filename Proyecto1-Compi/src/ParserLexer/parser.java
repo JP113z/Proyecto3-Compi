@@ -15,6 +15,7 @@ import java.io.File;
 import Tree.Arbol;
 import Tree.Nodo;
 import V2024.Resultado;
+import java.util.Map;
 import java_cup.runtime.XMLElement;
 
 /** CUP v0.11b 20160615 (GIT 4ac7450) generated parser.
@@ -979,6 +980,16 @@ public class parser extends java_cup.runtime.lr_parser {
            }
          }
 
+    private Map<String, String> variableToRegister = new HashMap<>();
+
+    public String getOrAssignRegister(String variable) {
+        if (!variableToRegister.containsKey(variable)) {
+            String temp = newTemp(); // Asignar un nuevo registro temporal
+            variableToRegister.put(variable, temp);
+        }
+        return variableToRegister.get(variable);
+    }
+
     public String obtenerValorString(String id) {
         // Buscar el string declarado en .data y devolver su valor
         String data = dataSection.toString();
@@ -996,8 +1007,15 @@ public class parser extends java_cup.runtime.lr_parser {
 
     public void guardarCodigoMIPS(String archivoSalida) {
         try (FileWriter writer = new FileWriter(archivoSalida)) {
+            StringBuilder codigoCompleto = new StringBuilder();
+            if (dataSectionGenerated) {
+                codigoCompleto.append(dataSection.toString()).append("\n");
+            }
+            if (textSectionGenerated) {
+                codigoCompleto.append(codMIPS.toString());
+            }
             // Guardar el contenido del código MIPS generado
-            writer.write(codMIPS.toString());
+            writer.write(codigoCompleto.toString());
             System.out.println("El código MIPS ha sido guardado en el archivo: " + archivoSalida);
         } catch (IOException e) {
             System.err.println("Error escribiendo en el archivo: " + e.getMessage());
@@ -1827,12 +1845,14 @@ class CUP$parser$actions {
         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
         String tipoVar = ((Resultado) t).tipo;
+
         if (tipoVar.equals("cometa")) {
             // Declarar el string en .data
             parser.declararString(id.toString(), " ");
         } else {
-            // Declarar otras variables
-            parser.gen("sw $zero, " + id);
+            // Asignar la variable a un registro temporal
+            String reg = parser.getOrAssignRegister(id.toString());
+            parser.gen("li " + reg + ", 0"); // Inicializar el registro con 0
         }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1870,9 +1890,9 @@ class CUP$parser$actions {
             parser.gen("li $v0, 4");     // Syscall para imprimir cadenas
             parser.gen("syscall");
         } else {
-            // Declarar y asignar otras variables
-            parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
-            parser.gen("sw $zero, " + id);
+            // Asignar la variable a un registro temporal y asignar el valor
+            String reg = parser.getOrAssignRegister(id.toString());
+            parser.gen("move " + reg + ", " + ((Resultado) e).temp);
         }
 
         // Validación semántica de tipos

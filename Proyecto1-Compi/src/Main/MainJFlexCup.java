@@ -142,7 +142,7 @@ public class MainJFlexCup {
           //  String nombreAsm = pedirNombreArchivoMips();
 
             myParser.imprimirTablaSimbolos();
-            //myParser.guardarCodigoMIPS(nombreAsm);
+            myParser.guardarCodigoMIPS("asm.asm");
             myParser.imprimirCodigoMIPS();
 
             //System.out.println("\nÁrbol sintáctico generado:");
