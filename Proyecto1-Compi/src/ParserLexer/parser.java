@@ -2752,7 +2752,27 @@ class CUP$parser$actions {
           case 96: // if_stmt ::= IF PARENTESISAPERTURA expresion PARENTESISCIERRE bloqueEstructura 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int bleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int bright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object b = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                  String etiquetaTrue = "_etiqueta_true_" + parser.currentTemp++;
+                  String etiquetaEnd = "_etiqueta_end_" + parser.currentTemp++;
 
+                  parser.gen("bne " + ((Resultado) e).temp + ", $zero, " + etiquetaTrue);
+                  parser.gen("j " + etiquetaEnd);
+
+                  parser.gen(etiquetaTrue + ":");
+                 if (b != null && b.toString().trim().length() > 0) {
+                             parser.gen(b.toString());
+                 } else {
+                          System.err.println("Error: Bloque vacío en if.");
+                  }
+                    parser.gen(etiquetaEnd + ":");
+            
               CUP$parser$result = parser.getSymbolFactory().newSymbol("if_stmt",15, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2761,7 +2781,43 @@ class CUP$parser$actions {
           case 97: // if_stmt ::= IF PARENTESISAPERTURA expresion PARENTESISCIERRE bloqueEstructura ELSE bloqueEstructura 
             {
               Object RESULT =null;
+		int eleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left;
+		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
+		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
+		int bleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).left;
+		int bright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)).right;
+		Object b = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-2)).value;
+		int b_elseleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int b_elseright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object b_else = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
+		
+                    String etiquetaTrue = "_etiqueta_true_" + parser.currentTemp++;
+                    String etiquetaElse = "_etiqueta_else_" + parser.currentTemp++;
+                    String etiquetaEnd = "_etiqueta_end_" + parser.currentTemp++;
 
+                    // Generar las etiquetas y condición para el if
+                    parser.gen("bne " + ((Resultado) e).temp + ", $zero, " + etiquetaTrue);
+                    parser.gen("j " + etiquetaElse);
+
+                    // Etiqueta para el bloque if
+                    parser.gen(etiquetaTrue + ":");
+                    if (b != null && !b.toString().trim().isEmpty()) {
+                              parser.gen(b.toString());
+                    } else {
+                               System.err.println("error: Bloque 'if' vacío.");
+                    }
+                       parser.gen("j " + etiquetaEnd);
+
+                       // Etiqueta para el bloque else
+                       parser.gen(etiquetaElse + ":");
+                      if (b_else != null && !b_else.toString().trim().isEmpty()) {
+                             parser.gen(b_else.toString());
+                       } else {
+                              System.err.println("error: Bloque 'else' vacío.");
+                       }
+
+                      parser.gen(etiquetaEnd + ":");
+          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("if_stmt",15, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-6)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;

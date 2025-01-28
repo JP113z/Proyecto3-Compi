@@ -990,8 +990,51 @@ estructura_control ::= if_stmt
                     | for_stmt
                     | switch_stmt;
 
-if_stmt ::= IF PARENTESISAPERTURA expresion PARENTESISCIERRE bloqueEstructura
-          | IF PARENTESISAPERTURA expresion PARENTESISCIERRE bloqueEstructura ELSE bloqueEstructura
+if_stmt ::= IF PARENTESISAPERTURA expresion:e PARENTESISCIERRE bloqueEstructura:b
+            {:
+                  String etiquetaTrue = "_etiqueta_true_" + parser.currentTemp++;
+                  String etiquetaEnd = "_etiqueta_end_" + parser.currentTemp++;
+
+                  parser.gen("bne " + ((Resultado) e).temp + ", $zero, " + etiquetaTrue);
+                  parser.gen("j " + etiquetaEnd);
+
+                  parser.gen(etiquetaTrue + ":");
+                 if (b != null && b.toString().trim().length() > 0) {
+                             parser.gen(b.toString());
+                 } else {
+                          System.err.println("Error: Bloque vacío en if.");
+                  }
+                    parser.gen(etiquetaEnd + ":");
+            :}
+          |  IF PARENTESISAPERTURA expresion:e PARENTESISCIERRE bloqueEstructura:b ELSE bloqueEstructura:b_else
+           {:
+                    String etiquetaTrue = "_etiqueta_true_" + parser.currentTemp++;
+                    String etiquetaElse = "_etiqueta_else_" + parser.currentTemp++;
+                    String etiquetaEnd = "_etiqueta_end_" + parser.currentTemp++;
+
+                    // Generar las etiquetas y condición para el if
+                    parser.gen("bne " + ((Resultado) e).temp + ", $zero, " + etiquetaTrue);
+                    parser.gen("j " + etiquetaElse);
+
+                    // Etiqueta para el bloque if
+                    parser.gen(etiquetaTrue + ":");
+                    if (b != null && !b.toString().trim().isEmpty()) {
+                              parser.gen(b.toString());
+                    } else {
+                               System.err.println("error: Bloque 'if' vacío.");
+                    }
+                       parser.gen("j " + etiquetaEnd);
+
+                       // Etiqueta para el bloque else
+                       parser.gen(etiquetaElse + ":");
+                      if (b_else != null && !b_else.toString().trim().isEmpty()) {
+                             parser.gen(b_else.toString());
+                       } else {
+                              System.err.println("error: Bloque 'else' vacío.");
+                       }
+
+                      parser.gen(etiquetaEnd + ":");
+          :}
           | IF PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura
           | IF PARENTESISAPERTURA expresion PARENTESISCIERRE error ELSE bloqueEstructura
           | IF PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura ELSE bloqueEstructura;

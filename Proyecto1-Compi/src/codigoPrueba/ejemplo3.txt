@@ -1,24 +1,13 @@
-rodolfo _funcion_ abreregalo cupido _x22_ , rodolfo _id_ , cometa _hola_ cierraregalo
+rodolfo _verano_ abreregalo cierraregalo
 abrecuento
 
-bromista  _fl1_ entrega 56.6 finregalo
-bromista  _in1_ entrega 56.6 finregalo
-bromista  _in2_ entrega _fl1_ intercambio 14.8 reyes _in1_  navidad 7.9 intercambio 15.9 finregalo
-bromista  _fl2_ entrega 3.7 adviento _fl1_ navidad  abreregalo 45.6 magos 76.9 cierraregalo  finregalo
+cometa _var_ entrega "Probando if2" finregalo
 
-rodolfo _x3_ entrega 2 finregalo
-narra  abreregalo "Hoal" cierraregalo  finregalo
-escucha  abreregalo _x3_ cierraregalo  finregalo
+elfo  abreregalo 8 minstix 6 cierraregalo
+		 abrecuento
+			rodolfo _var_ entrega 8 finregalo
+			 envia finregalo
+		 cierracuento
 
-envia 1 finregalo
-cierracuento
-
-  bromista  _mi2_  abreregalo  rodolfo  _dif_ ,  cupido  _otra_   cierraregalo abrecuento
-
-    rodolfo _arr1_ abreempaque 10 cierraempaque entrega 10 finregalo
-     rodolfo _arr3_ abreempaque 10 cierraempaque  finregalo
-
-    rodolfo _arr2_ abreempaque 2 cierraempaque entrega abrecuento 10 , 3 cierracuento finregalo
-
-    envia 1.4 finregalo
-  cierracuento
+ envia 1 finregalo
+ cierracuento
