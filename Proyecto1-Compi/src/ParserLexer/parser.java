@@ -1878,6 +1878,7 @@ class CUP$parser$actions {
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
         String tipoVar = ((Resultado) t).tipo;
         String tipoExpresion = ((Resultado) e).tipo;

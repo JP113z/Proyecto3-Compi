@@ -558,6 +558,7 @@ declaracion ::= tipo:t IDENTIFICADOR:id
 | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
     {:
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
+        parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
         String tipoVar = ((Resultado) t).tipo;
         String tipoExpresion = ((Resultado) e).tipo;
