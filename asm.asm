@@ -1,6 +1,7 @@
 .data
-_string_1: .asciiz "Probando if2"
-_var1_: .asciiz "Probando if2"
+_string_: .asciiz " "
+_string_5: .asciiz "hola"
+_string2_: .asciiz "hola"
 
 .text
 .globl main
@@ -13,18 +14,15 @@ addi $sp, $sp, -8
 sw $ra, 4($sp)
 sw $fp, 0($sp)
 move $fp, $sp
-la $a0, _var1_
-li $v0, 4
-syscall
+li $t1, 0
 li $t2, 0
-li $t3, 10
-move $t2, $t3
-lw $t4, _var1_
-la $a0, $t4
+li $t3, 4
+move $t4, $t3
+la $a0, _string2_
 li $v0, 4
 syscall
-li $t5, 1
-move $v0, $t5
+li $t6, 1
+move $v0, $t6
 jr $ra
 
 # Fin del main (_verano_)

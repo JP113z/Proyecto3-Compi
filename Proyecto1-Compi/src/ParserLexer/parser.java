@@ -925,7 +925,7 @@ public class parser extends java_cup.runtime.lr_parser {
     StringBuffer dataSection = new StringBuffer();
     int currentTemp = 1;
 
-   public String newTemp() {
+    public String newTemp() {
            return "$t" + currentTemp++;
        }
 
@@ -933,6 +933,18 @@ public class parser extends java_cup.runtime.lr_parser {
               System.out.println("Generando instrucción: " + instruction);
               codMIPS.append(instruction).append("\n");
           }
+
+        public String floatToIEEE754(String floatStr) {
+            try {
+                float value = Float.parseFloat(floatStr); // Convertir a float
+                int intBits = Float.floatToIntBits(value); // Convertir a IEEE 754 (bits enteros)
+                return "0x" + Integer.toHexString(intBits).toUpperCase(); // Devolver como hexadecimal
+            } catch (NumberFormatException e) {
+                System.err.println("Error: No se pudo convertir " + floatStr + " a IEEE 754");
+                return "0x0000";
+            }
+        }
+
 
         public void imprimirCodigoMIPS() {
             StringBuilder codigoCompleto = new StringBuilder();
@@ -1776,7 +1788,9 @@ class CUP$parser$actions {
                     parser.gen("la $a0, " + temp);  // Cargar la dirección de la cadena
                     parser.gen("li $v0, 4");        // Print string
                 } else if (tipo.equals("bromista")) {
-                    parser.gen("li $v0, 2");         // Print float
+                    parser.gen("li $v0, 2");
+                    parser.gen("mtc1 $t0, $f12");
+                    parser.gen("nop"); // Evitar problemas con mtc1
                 } else {
                     parser.gen("move $a0, " + temp); // Mover valores numéricos
                     switch (tipo) {
@@ -2485,8 +2499,13 @@ class CUP$parser$actions {
         Symbol symbol = (Symbol) CUP$parser$stack.peek();
         String temp = parser.newTemp();
         parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
-        parser.gen("li.s " + temp + ", " + symbol.value);
-        RESULT = new Resultado("bromista", temp);
+        String ieee754Hex = parser.floatToIEEE754(symbol.value.toString());
+
+        parser.gen("li $t0, " + ieee754Hex);   // Cargar IEEE 754 en $t0
+        //parser.gen("mtc1 $t0, $f12");
+        //parser.gen("nop"); // Evitar problemas con `mtc1`
+
+           RESULT = new Resultado("bromista", "$f12");
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

@@ -3,9 +3,9 @@ abrecuento
 
 cometa _var1_ entrega "Probando if2" finregalo
 rodolfo _var2_ finregalo
- _var2_ entrega 10 finregalo
+_var2_ entrega 10 finregalo
 
 narra abreregalo _var1_ cierraregalo finregalo
 
  envia 1 finregalo
- cierracuento
+cierracuento
