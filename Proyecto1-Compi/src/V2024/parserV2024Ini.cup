@@ -29,7 +29,8 @@ parser code {:
     private boolean textSectionGenerated = false;
 
     public String etiquetaTrue;
-    public String etiquetaEnd;
+    public String etiquetaEndIf;
+    public String etiquetaEndElse;
 
     StringBuffer codMIPS = new StringBuffer();
     StringBuffer dataSection = new StringBuffer();
@@ -369,7 +370,7 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
-parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read, return_estructura_stmt, if_stmt_aux, if_stmt_cabecera;
+parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read, return_estructura_stmt, if_stmt_aux, if_stmt_cabecera, if_else_stmt;
 
 /* Precedencias */
 precedence right error;
@@ -1060,50 +1061,33 @@ if_stmt ::= if_stmt_cabecera if_stmt_aux;
 if_stmt_cabecera ::= IF PARENTESISAPERTURA expresion:e PARENTESISCIERRE
             {:
                   parser.etiquetaTrue = "_etiqueta_true_" + parser.currentTemp++;
-                  parser.etiquetaEnd = "_etiqueta_end_" + parser.currentTemp++;
+                  parser.etiquetaEndIf = "_etiqueta_end_if" + parser.currentTemp++;
+                  parser.etiquetaEndElse = "_etiqueta_end_else" + parser.currentTemp++;
 
                   parser.gen("bne " + ((Resultado) e).temp + ", $zero, " + etiquetaTrue);
-                  parser.gen("j " + etiquetaEnd);
+                  parser.gen("j " + etiquetaEndIf);
 
                   parser.gen(etiquetaTrue + ":");
             :}
-     /*      |  IF PARENTESISAPERTURA expresion:e PARENTESISCIERRE bloqueEstructura:b ELSE bloqueEstructura:b_else
-           {:
-                    String etiquetaTrue = "_etiqueta_true_" + parser.currentTemp++;
-                    String etiquetaElse = "_etiqueta_else_" + parser.currentTemp++;
-                    String etiquetaEnd = "_etiqueta_end_" + parser.currentTemp++;
-
-                    // Generar las etiquetas y condición para el if
-                    parser.gen("bne " + ((Resultado) e).temp + ", $zero, " + etiquetaTrue);
-                    parser.gen("j " + etiquetaElse);
-
-                    // Etiqueta para el bloque if
-                    parser.gen(etiquetaTrue + ":");
-                    if (b != null && !b.toString().trim().isEmpty()) {
-                              parser.gen(b.toString());
-                    } else {
-                               System.err.println("error: Bloque 'if' vacío.");
-                    }
-                       parser.gen("j " + etiquetaEnd);
-
-                       // Etiqueta para el bloque else
-                       parser.gen(etiquetaElse + ":");
-                      if (b_else != null && !b_else.toString().trim().isEmpty()) {
-                             parser.gen(b_else.toString());
-                       } else {
-                              System.err.println("error: Bloque 'else' vacío.");
-                       }
-
-                      parser.gen(etiquetaEnd + ":");
-          :} */
           | IF PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura
           | IF PARENTESISAPERTURA expresion PARENTESISCIERRE error ELSE bloqueEstructura
           | IF PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura ELSE bloqueEstructura;
 
 if_stmt_aux ::= bloqueEstructura
                 {:
-                    parser.gen(parser.etiquetaEnd + ":");
-                :};
+                    parser.gen(parser.etiquetaEndIf + ":");
+                :}
+                | bloqueEstructura
+                {:
+                    parser.gen("j " + etiquetaEndElse);
+                    parser.gen(parser.etiquetaEndIf + ":");
+                :}
+                 ELSE if_else_stmt;
+
+if_else_stmt ::= bloqueEstructura
+                 {:
+                   parser.gen(parser.etiquetaEndElse + ":");
+                 :};
 
 while_stmt ::= WHILE PARENTESISAPERTURA expresion PARENTESISCIERRE bloqueEstructura
              | WHILE PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura;

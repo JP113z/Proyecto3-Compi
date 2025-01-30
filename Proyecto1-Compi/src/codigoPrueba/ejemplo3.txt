@@ -1,12 +1,17 @@
 rodolfo _verano_ abreregalo cierraregalo
 abrecuento
 
-elfo  abreregalo 8 minstix 6 cierraregalo
+elfo  abreregalo 6 minstix 8 cierraregalo
 		 abrecuento
 		    narra abreregalo 5.8 cierraregalo finregalo
 			rodolfo _var_ entrega 8 finregalo
 			 envia finregalo
 		 cierracuento
+ hada   abrecuento
+		    narra abreregalo 7.8 cierraregalo finregalo
+			rodolfo _var_ entrega 10 finregalo
+			 envia finregalo
+	 cierracuento
 
  envia 1 finregalo
  cierracuento
