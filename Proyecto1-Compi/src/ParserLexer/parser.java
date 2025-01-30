@@ -1805,7 +1805,7 @@ class CUP$parser$actions {
                 } else if (tipo.equals("bromista")) {
                     parser.gen("li $v0, 2");
                     parser.gen("mtc1 $t0, $f12");
-                    parser.gen("nop"); // Evitar problemas con mtc1
+                    //parser.gen("nop"); // Evitar problemas con mtc1
                 } else {
                     parser.gen("move $a0, " + temp); // Mover valores numéricos
                     switch (tipo) {
@@ -1858,7 +1858,12 @@ class CUP$parser$actions {
                     break;
             }
             parser.gen("syscall");
-            parser.gen("move " + tempRead + ", $v0");
+            if (tipo.equals("bromista")) {
+                   parser.gen("mtc1 $v0, " + tempRead);
+                   // parser.gen("cvt.s.w " + tempRead + ", " + tempRead);
+            } else {
+                  parser.gen("move " + tempRead + ", $v0");
+            }
 
             if (temp != null) {
                 parser.asignarCodigoMIPS(temp, tempRead);
@@ -1919,6 +1924,7 @@ class CUP$parser$actions {
 
         String tipoVar = ((Resultado) t).tipo;
         String tipoExpresion = ((Resultado) e).tipo;
+        String valorExpresion = ((Resultado) e).temp;
 
         if (tipoVar.equals("cometa")) {
             // Usar el identificador del string directamente
@@ -1931,8 +1937,11 @@ class CUP$parser$actions {
             parser.gen("la $a0, " + id.toString()); // Cargar la dirección del string
             parser.gen("li $v0, 4"); // Syscall para imprimir cadenas
             parser.gen("syscall");
-        } else {
-            // Asignar la variable a un registro temporal previamente guardado
+        } else if (tipoVar.equals("bromista")) {
+            String regFloat = parser.newTemp();
+             parser.gen("mov.s " + regFloat + ", " + valorExpresion);
+              parser.asignarCodigoMIPS(id.toString(), regFloat);
+          }else {
             String reg = parser.getOrAssignRegister(id.toString());
             parser.gen("move " + reg + ", " + ((Resultado) e).temp);
         }
@@ -2517,7 +2526,8 @@ class CUP$parser$actions {
         String ieee754Hex = parser.floatToIEEE754(symbol.value.toString());
 
         parser.gen("li $t0, " + ieee754Hex);   // Cargar IEEE 754 en $t0
-        //parser.gen("mtc1 $t0, $f12");
+        parser.gen("mtc1 $t0, $f12");
+        parser.gen("cvt.s.w $f0, $f0");
         //parser.gen("nop"); // Evitar problemas con `mtc1`
 
            RESULT = new Resultado("bromista", "$f12");

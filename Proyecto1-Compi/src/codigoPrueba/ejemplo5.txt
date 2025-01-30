@@ -2,15 +2,15 @@ rodolfo _verano_ abreregalo cierraregalo
 abrecuento
 
 
-#escucha abreregalo 15 cierraregalo finregalo
+#escucha abreregalo 15.786 cierraregalo finregalo
 
-rodolfo _intva_ entrega 10 finregalo
+#rodolfo _intva_ entrega 10 finregalo
 
-#bromista _float_ entrega 8.9 finregalo
+bromista _float_ entrega 8.9 finregalo
 
 #cometa _string2_ entrega "esto es un print" finregalo
 
-narra abreregalo _intva_ cierraregalo finregalo
+#narra abreregalo _intva_ cierraregalo finregalo
 
 #narra abreregalo "hola mundo" cierraregalo finregalo
 
