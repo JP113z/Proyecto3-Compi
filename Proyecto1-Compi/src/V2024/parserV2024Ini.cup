@@ -482,20 +482,21 @@ print::= PRINT PARENTESISAPERTURA expresion:e PARENTESISCIERRE
                                ": Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
         } else {
             if (temp != null) {
-                parser.gen("move $a0, " + temp);
-                switch (tipo) {
-                    case "rodolfo": // Entero
-                        parser.gen("li $v0, 1");
-                        break;
-                    case "bromista": // Flotante
-                        parser.gen("li $v0, 2");
-                        break;
-                    case "cometa": // Cadena
-                        parser.gen("li $v0, 4");
-                        break;
-                    case "cupido": // Carácter
-                        parser.gen("li $v0, 11");
-                        break;
+                if (tipo.equals("cometa")) {
+                    parser.gen("la $a0, " + temp);  // Cargar la dirección de la cadena
+                    parser.gen("li $v0, 4");        // Print string
+                } else if (tipo.equals("bromista")) {
+                    parser.gen("li $v0, 2");         // Print float
+                } else {
+                    parser.gen("move $a0, " + temp); // Mover valores numéricos
+                    switch (tipo) {
+                        case "rodolfo": // Entero
+                            parser.gen("li $v0, 1");
+                            break;
+                        case "cupido": // Carácter
+                            parser.gen("li $v0, 11");
+                            break;
+                    }
                 }
                 parser.gen("syscall");
             }
@@ -1068,7 +1069,7 @@ default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
                | DEFAULT error lista_sentencias;
 
 
-declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
+declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo:a
                       {:
                          Symbol symbol = (Symbol) CUP$parser$stack.peek();
                          parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
@@ -1080,8 +1081,21 @@ declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                          } else {
                              System.out.println("Declaración válida: arreglo '" + id + "' de tipo '" + ((Resultado) t).tipo + "'.");
                          }
+                         String tempIndice = ((Resultado) a).temp;
+                         String tempSize = parser.newTemp();
+                         String tempBase = parser.newTemp();
+                         String tempRegistro = parser.newTemp();
+
+                         parser.gen("mul " + tempSize + ", " + tempIndice + ", 4");
+                         parser.gen("li $v0, 9");
+                         parser.gen("move $a0, " + tempSize);
+                         parser.gen("syscall");
+
+                         parser.gen("move " + tempBase + ", $v0");
+                         parser.gen("li " + tempRegistro + ", 3");
+                         parser.gen("sw " + tempRegistro + ", 0(" + tempBase + ")");
                       :}
-                  | IDENTIFICADOR:id acceso_arreglo
+                  | IDENTIFICADOR:id acceso_arreglo:a
                   | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
                   {:
                     Symbol symbol = (Symbol) CUP$parser$stack.peek();
@@ -1107,11 +1121,24 @@ declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo
                         System.out.println("Asignación a arreglo válida: '" + id + "'.");
                     }
                   :}
-                  | tipo:t IDENTIFICADOR:id acceso_arreglo ASIGNA corcheteIzquierdo parametrosArreglos corcheteDerecho
+                  | tipo:t IDENTIFICADOR:id acceso_arreglo:a ASIGNA corcheteIzquierdo parametrosArreglos corcheteDerecho
                     {:
                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
                         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
                         System.out.println("Declaración y asignación de arreglo inicializado: '" + id + "'.");
+
+                         String tempIndice = ((Resultado) a).temp;
+                         String tempSize = parser.newTemp();
+                         String tempBase = parser.newTemp();
+                         String tempRegistro = parser.newTemp();
+
+                         parser.gen("li " + tempSize + ", " + tempIndice + ", 4");
+                         parser.gen("li $v0, 9");
+                         parser.gen("move $a0, " + tempSize);
+                         parser.gen("syscall");
+                         parser.gen("move " + tempBase + ", $v0");
+                         parser.gen("li " + tempRegistro + ", 3");
+                         parser.gen("sw " + tempRegistro + ", 0(" + tempBase + ")");
                     :}
                   | IDENTIFICADOR:id acceso_arreglo ASIGNA expresion:e
                     {:

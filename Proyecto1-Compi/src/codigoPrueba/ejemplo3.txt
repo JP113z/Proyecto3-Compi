@@ -9,7 +9,7 @@ narra abreregalo _var1_ cierraregalo finregalo
 
 4 navidad 5  intercambio abreregalo 18 quien navidad 15  cierraregalo finregalo
 
-true  melchor false  finregalo
+escucha abreregalo _var2_ cierraregalo finregalo
 
 elfo  abreregalo 8 minstix 6 cierraregalo
 		 abrecuento

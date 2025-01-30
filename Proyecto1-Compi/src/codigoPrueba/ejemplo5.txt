@@ -1,16 +1,19 @@
+rodolfo _verano_ abreregalo cierraregalo
+abrecuento
 
-# Función con parámetros
-bromista _funcion1_ abreregalo rodolfo _a_ , rodolfo _b_ cierraregalo
-    abrecuento  
-       cupido _arr_ abreempaque _lit_ cierraempaque  entrega   abrecuento 'c' , 'd'
-       cierracuento  finregalo
-        cupido _letras_ abreempaque _5_ cierraempaque entrega abrecuento 'a' , 'b' , 'c' , 'd' , 'e' cierracuento finregalo
+#bromista _float_ entrega 8.9 finregalo
 
+#cometa _string2_ entrega "esto es un print" finregalo
 
-    # Llamado a función
-     _funcion1_ abreregalo 10 , 20 cierraregalo finregalo
+#narra abreregalo _string2_ cierraregalo finregalo
 
+narra abreregalo "hola mundo" cierraregalo finregalo
 
- envia _x22_ finregalo
- cierracuento
+narra abreregalo 'd' cierraregalo finregalo
 
+#narra abreregalo 8.8 cierraregalo finregalo
+
+narra abreregalo 100 cierraregalo finregalo
+
+envia 1 finregalo
+cierracuento

@@ -1765,20 +1765,21 @@ class CUP$parser$actions {
                                ": Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
         } else {
             if (temp != null) {
-                parser.gen("move $a0, " + temp);
-                switch (tipo) {
-                    case "rodolfo": // Entero
-                        parser.gen("li $v0, 1");
-                        break;
-                    case "bromista": // Flotante
-                        parser.gen("li $v0, 2");
-                        break;
-                    case "cometa": // Cadena
-                        parser.gen("li $v0, 4");
-                        break;
-                    case "cupido": // Carácter
-                        parser.gen("li $v0, 11");
-                        break;
+                if (tipo.equals("cometa")) {
+                    parser.gen("la $a0, " + temp);  // Cargar la dirección de la cadena
+                    parser.gen("li $v0, 4");        // Print string
+                } else if (tipo.equals("bromista")) {
+                    parser.gen("li $v0, 2");         // Print float
+                } else {
+                    parser.gen("move $a0, " + temp); // Mover valores numéricos
+                    switch (tipo) {
+                        case "rodolfo": // Entero
+                            parser.gen("li $v0, 1");
+                            break;
+                        case "cupido": // Carácter
+                            parser.gen("li $v0, 11");
+                            break;
+                    }
                 }
                 parser.gen("syscall");
             }
@@ -2999,6 +3000,9 @@ class CUP$parser$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int aleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int aright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object a = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
                          Symbol symbol = (Symbol) CUP$parser$stack.peek();
                          parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
@@ -3010,6 +3014,19 @@ class CUP$parser$actions {
                          } else {
                              System.out.println("Declaración válida: arreglo '" + id + "' de tipo '" + ((Resultado) t).tipo + "'.");
                          }
+                         String tempIndice = ((Resultado) a).temp;
+                         String tempSize = parser.newTemp();
+                         String tempBase = parser.newTemp();
+                         String tempRegistro = parser.newTemp();
+
+                         parser.gen("mul " + tempSize + ", " + tempIndice + ", 4");
+                         parser.gen("li $v0, 9");
+                         parser.gen("move $a0, " + tempSize);
+                         parser.gen("syscall");
+
+                         parser.gen("move " + tempBase + ", $v0");
+                         parser.gen("li " + tempRegistro + ", 3");
+                         parser.gen("sw " + tempRegistro + ", 0(" + tempBase + ")");
                       
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -3022,6 +3039,9 @@ class CUP$parser$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-1)).value;
+		int aleft = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).left;
+		int aright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
+		Object a = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -3078,10 +3098,26 @@ class CUP$parser$actions {
 		int idleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)).left;
 		int idright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-5)).right;
 		Object id = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-5)).value;
+		int aleft = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).left;
+		int aright = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)).right;
+		Object a = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-4)).value;
 		
                         Symbol symbol = (Symbol) CUP$parser$stack.peek();
                         parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
                         System.out.println("Declaración y asignación de arreglo inicializado: '" + id + "'.");
+
+                         String tempIndice = ((Resultado) a).temp;
+                         String tempSize = parser.newTemp();
+                         String tempBase = parser.newTemp();
+                         String tempRegistro = parser.newTemp();
+
+                         parser.gen("li " + tempSize + ", " + tempIndice + ", 4");
+                         parser.gen("li $v0, 9");
+                         parser.gen("move $a0, " + tempSize);
+                         parser.gen("syscall");
+                         parser.gen("move " + tempBase + ", $v0");
+                         parser.gen("li " + tempRegistro + ", 3");
+                         parser.gen("sw " + tempRegistro + ", 0(" + tempBase + ")");
                     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracionArreglo",32, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-6)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
