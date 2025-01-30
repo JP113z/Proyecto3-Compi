@@ -6,6 +6,8 @@ rodolfo _x1_ finregalo
 cometa _string_ finregalo
 rodolfo _x2_ entrega 4 finregalo
 
+2 navidad 2 finregalo
+
 cometa _string2_ entrega "hola" finregalo
 
   envia 1 finregalo

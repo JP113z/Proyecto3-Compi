@@ -923,11 +923,23 @@ public class parser extends java_cup.runtime.lr_parser {
 
     StringBuffer codMIPS = new StringBuffer();
     StringBuffer dataSection = new StringBuffer();
-    int currentTemp = 1;
+
+    private int currentTemp = 0; // Contador de registros temporales ($t0 - $t9)
+    private int maxTemp = 9;     // Máximo índice para registros temporales
+    private int currentSecondary = 0; // Contador de registros secundarios ($s0 - $s7)
+    private int maxSecondary = 7;     // Máximo índice para registros secundarios
 
     public String newTemp() {
-           return "$t" + currentTemp++;
-       }
+        if (currentTemp <= maxTemp) {
+            // Usar registros temporales ($t0 - $t9)
+            return "$t" + currentTemp++;
+        } else {
+            // Usar registros secundarios ($s0 - $s7) de manera cíclica
+            String secondaryRegister = "$s" + currentSecondary;
+            currentSecondary = (currentSecondary + 1) % (maxSecondary + 1); // Cíclico
+            return secondaryRegister;
+        }
+    }
 
        public void gen(String instruction) {
               System.out.println("Generando instrucción: " + instruction);
@@ -959,15 +971,14 @@ public class parser extends java_cup.runtime.lr_parser {
         }
 
         public void asignarCodigoMIPS(String id, String temp) {
-                if (id == null || temp == null) {
-                    System.err.println("Error: id o temp no pueden ser nulos");
-                    return;
-                }
-                gen("la $t0, " + id);  // Cargar la dirección de la variable en $t0
-                gen("lw $t1, " + temp); // Cargar el valor del temporal en $t1
-                gen("sw $t1, 0($t0)");  // Guardar el valor en la dirección de la variable
-               // imprimirCodigoMIPS();
-       }
+            if (temp == null) {
+                System.err.println("Error: temp no puede ser nulo");
+                return;
+            }
+
+            String regDestino = getOrAssignRegister(id);  // Obtener o asignar un registro para la variable
+            gen("move " + regDestino + ", " + temp);  // Mover el resultado a la variable
+        }
 
         public void declararString(String id, String valor) {
             if (!dataSectionGenerated) {
