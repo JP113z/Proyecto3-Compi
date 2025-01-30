@@ -924,20 +924,24 @@ public class parser extends java_cup.runtime.lr_parser {
     StringBuffer codMIPS = new StringBuffer();
     StringBuffer dataSection = new StringBuffer();
 
-    private int currentTemp = 0; // Contador de registros temporales ($t0 - $t9)
-    private int maxTemp = 9;     // Máximo índice para registros temporales
-    private int currentSecondary = 0; // Contador de registros secundarios ($s0 - $s7)
-    private int maxSecondary = 7;     // Máximo índice para registros secundarios
+    private int maxTemp = 9;          // Máximo índice para registros temporales ($t0 - $t9)
+    private int currentTemp = 0;      // Contador de registros temporales
+    private int maxSecondary = 7;     // Máximo índice para registros secundarios ($s0 - $s7)
+    private int currentSecondary = 0; // Contador de registros secundarios
+    private int stackOffset = 0;      // Offset actual en la pila
 
     public String newTemp() {
         if (currentTemp <= maxTemp) {
             // Usar registros temporales ($t0 - $t9)
             return "$t" + currentTemp++;
+        } else if (currentSecondary <= maxSecondary) {
+            // Usar registros secundarios ($s0 - $s7)
+            return "$s" + currentSecondary++;
         } else {
-            // Usar registros secundarios ($s0 - $s7) de manera cíclica
-            String secondaryRegister = "$s" + currentSecondary;
-            currentSecondary = (currentSecondary + 1) % (maxSecondary + 1); // Cíclico
-            return secondaryRegister;
+            // Usar la pila para valores adicionales
+            stackOffset += 4;
+            gen("addi $sp, $sp, -4");
+            return "-" + stackOffset + "($sp)";
         }
     }
 
