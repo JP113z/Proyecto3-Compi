@@ -984,14 +984,21 @@ public class parser extends java_cup.runtime.lr_parser {
            }
          }
 
+    // Mapa para asociar variables con registros
     private Map<String, String> variableToRegister = new HashMap<>();
 
+    // Devuelve el registro donde está almacenada la variable, o asigna uno nuevo si es necesario
     public String getOrAssignRegister(String variable) {
         if (!variableToRegister.containsKey(variable)) {
             String temp = newTemp(); // Asignar un nuevo registro temporal
             variableToRegister.put(variable, temp);
         }
         return variableToRegister.get(variable);
+    }
+
+    // Método para obtener el registro asociado a una variable (si existe)
+    public String getRegisterForVariable(String variable) {
+        return variableToRegister.get(variable); // Retorna null si no existe
     }
 
     public String obtenerValorString(String id) {
@@ -1855,9 +1862,9 @@ class CUP$parser$actions {
             // Declarar el string en .data
             parser.declararString(id.toString(), " ");
         } else {
-            // Asignar la variable a un registro temporal
+            // Asignar un registro temporal a la variable
             String reg = parser.getOrAssignRegister(id.toString());
-            parser.gen("li " + reg + ", 0"); // Inicializar el registro con 0
+            parser.gen("li " + reg + ", 0"); // Inicializar la variable con 0
         }
     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
@@ -1893,10 +1900,10 @@ class CUP$parser$actions {
 
             // Referenciarlo en .text
             parser.gen("la $a0, " + id.toString()); // Cargar la dirección del string
-            parser.gen("li $v0, 4");     // Syscall para imprimir cadenas
+            parser.gen("li $v0, 4"); // Syscall para imprimir cadenas
             parser.gen("syscall");
         } else {
-            // Asignar la variable a un registro temporal y asignar el valor
+            // Asignar la variable a un registro temporal previamente guardado
             String reg = parser.getOrAssignRegister(id.toString());
             parser.gen("move " + reg + ", " + ((Resultado) e).temp);
         }
@@ -2005,8 +2012,14 @@ class CUP$parser$actions {
                 Resultado resultadoExp = (Resultado) exp;
                 String tipoExpresion = resultadoExp.tipo;
                 String tempExpresion = resultadoExp.temp;
-                // Validar tipos
-                if (!tipoIdentificador.equals(tipoExpresion)) {
+
+                // Validar que la variable ha sido declarada (tiene un registro asignado)
+                String regDestino = parser.getRegisterForVariable(id.toString());
+
+                if (regDestino == null) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                       ": Variable '" + id + "' no ha sido declarada antes de la asignación.");
+                } else if (!tipoIdentificador.equals(tipoExpresion)) {
                     System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                        ": Asignación inválida. Variable '" + id +
                                        "' es de tipo " + tipoIdentificador + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
@@ -2016,9 +2029,7 @@ class CUP$parser$actions {
 
                     // Generación de código MIPS
                     if (tempExpresion != null) {
-                        parser.gen("la $t0, " + id);
-                        parser.gen("lw $t1, " + tempExpresion);
-                        parser.gen("sw $t1, 0($t0)");
+                        parser.gen("move " + regDestino + ", " + tempExpresion); // Asignar el valor al registro correcto
                     } else {
                         System.err.println("Error: El temporal de la expresión es null.");
                     }

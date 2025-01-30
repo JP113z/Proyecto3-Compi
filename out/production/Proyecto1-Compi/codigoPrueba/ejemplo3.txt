@@ -7,16 +7,5 @@ rodolfo _var2_ finregalo
 
 narra abreregalo _var1_ cierraregalo finregalo
 
-4 navidad 5  intercambio abreregalo 18 quien navidad 15  cierraregalo finregalo
-
-escucha abreregalo _var2_ cierraregalo finregalo
-
-elfo  abreregalo 8 minstix 6 cierraregalo
-		 abrecuento
-		    narra abreregalo 5.8 cierraregalo finregalo
-			rodolfo _var_ entrega 8 finregalo
-			 envia finregalo
-		 cierracuento
-
  envia 1 finregalo
  cierracuento
