@@ -11,19 +11,26 @@ abrecuento
 
     rodolfo _x1_ entrega 15 finregalo
 
-    rodolfo _x2_ entrega 20 finregalo
+    rodolfo _var2_ entrega 20 finregalo
 
-elfo  abreregalo 8 minstix 6 cierraregalo
+elfo  abreregalo 6 minstix 8 cierraregalo
 		 abrecuento
 		    narra abreregalo _y_ cierraregalo finregalo
 			rodolfo _var_ entrega 8 finregalo
 			 envia finregalo
 		 cierracuento
  hada   abrecuento
-		    narra abreregalo _x2_ cierraregalo finregalo
+		    narra abreregalo _z_ cierraregalo finregalo
 			rodolfo _var_ entrega 10 finregalo
 			 envia finregalo
 	 cierracuento
+
+		 envuelve  abreregalo _x_ minstix 0 cierraregalo
+		 abrecuento
+			narra abreregalo _x_ cierraregalo finregalo
+			_x_ entrega _x_ grinch finregalo
+			envia finregalo
+		 cierracuento
 
  envia 1 finregalo
  cierracuento

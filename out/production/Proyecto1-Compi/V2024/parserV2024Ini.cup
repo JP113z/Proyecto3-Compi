@@ -720,55 +720,74 @@ expresion ::= literal:e {: RESULT = e; :}
             :}
          | llamada_funcion:f {: RESULT = f; :}
          | expresion:e1 operador_unario:op
-               {:
-                   // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
-                   Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
-                   int line = symbol.left;
-                   int column = symbol.right;
+            {:
+                // Obtener el símbolo correspondiente a `e1` para extraer línea y columna
+                Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+                int line = symbol.left;
+                int column = symbol.right;
 
-                   // Obtener el tipo y el temporal de la expresión
-                   Resultado resultadoE1 = (Resultado) e1;
-                   String tipo = resultadoE1.tipo;
-                   String tempE1 = resultadoE1.temp;
+                // Obtener el tipo y el temporal de la expresión
+                Resultado resultadoE1 = (Resultado) e1;
+                String tipo = resultadoE1.tipo;
+                String tempE1 = resultadoE1.temp;
 
-                   // Validar tipos para operadores unarios
-                   if (op.toString().equals("quien") || op.toString().equals("grinch")) {
-                       if (!tipo.equals("rodolfo")) {
-                           System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                               ": Incremento/Decremento solo aplica a enteros (rodolfo).");
-                       }
-                   } else if (op.toString().equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
-                       System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                           ": Negación solo aplica a enteros o flotantes.");
-                   }
-                   boolean esFlotante = tipo.equals("bromista");
-                   String tempResultado = esFlotante ? parser.newFloatTemp() : parser.newTemp();
-                   if (esFlotante) {
-                       switch (op.toString()) {
-                           case "-": // Negación de flotantes
-                               parser.gen("neg.s " + tempResultado + ", " + tempE1);
-                               break;
-                           default:
-                               System.err.println("Error: Operación unaria flotante no soportada.");
-                       }
-                   } else {
-                       switch (op.toString()) {
-                           case "-": // Negación de enteros
-                               parser.gen("neg " + tempResultado + ", " + tempE1);
-                               break;
-                           case "quien": // Incremento para enteros
-                               parser.gen("addi " + tempResultado + ", " + tempE1 + ", 1");
-                               break;
-                           case "grinch": // Decremento para enteros
-                               parser.gen("addi " + tempResultado + ", " + tempE1 + ", -1");
-                               break;
-                           default:
-                               System.err.println("Error: Operación unaria no soportada.");
-                   }
+                // **Acceder al tipo de operador correctamente**
+                String operador = ((Resultado) op).tipo.trim();
+
+                // **Depuración: Verificar el valor real del operador**
+                System.out.println("DEBUG: Operador unario recibido -> '" + operador + "'");
+
+                // **Flag para indicar si hay error**
+                boolean error = false;
+
+                // Validar tipos para operadores unarios
+                if (operador.equals("quien") || operador.equals("grinch")) {
+                    if (!tipo.equals("rodolfo")) {
+                        System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                           ": Incremento/Decremento solo aplica a enteros (rodolfo).");
+                        error = true;
+                    }
+                } else if (operador.equals("-") && !tipo.equals("rodolfo") && !tipo.equals("bromista")) {
+                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                       ": Negación solo aplica a enteros o flotantes.");
+                    error = true;
                 }
 
-              RESULT = new Resultado(tipo, tempResultado);
-          :}
+                // Si hubo error, asignamos un resultado de error y no ejecutamos más código
+                if (error) {
+                    RESULT = new Resultado("error", null);
+                } else {
+                    boolean esFlotante = tipo.equals("bromista");
+                    String tempResultado = esFlotante ? parser.newFloatTemp() : parser.newTemp();
+
+                    if (esFlotante) {
+                        switch (operador) {
+                            case "-": // Negación de flotantes
+                                parser.gen("neg.s " + tempResultado + ", " + tempE1);
+                                break;
+                            default:
+                                System.err.println("Error: Operación unaria flotante no soportada.");
+                        }
+                    } else {
+                        switch (operador) {
+                            case "-": // Negación de enteros
+                                parser.gen("neg " + tempResultado + ", " + tempE1);
+                                break;
+                            case "quien": // Incremento para enteros
+                                parser.gen("addi " + tempResultado + ", " + tempE1 + ", 1");
+                                break;
+                            case "grinch": // Decremento para enteros
+                                parser.gen("addi " + tempResultado + ", " + tempE1 + ", -1");
+                                break;
+                            default:
+                                System.err.println("Error: Operación unaria no soportada. Recibido -> '" + operador + "'");
+                        }
+                    }
+
+                    // Solo asignar resultado si no hubo errores
+                    RESULT = new Resultado(tipo, tempResultado);
+                }
+            :}
           | expresion:e1 operador_binario:op expresion:e2
           {:
                 // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
@@ -781,78 +800,86 @@ expresion ::= literal:e {: RESULT = e; :}
                 int column2 = symbol2.right;
 
                 // Acceder a los tipos de los operandos desde los objetos Resultado
-                String tipo1 = ((Resultado) e1).tipo;
-                String tipo2 = ((Resultado) e2).tipo;
-
-                // Validar los tipos de los operandos
-                if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
-                          (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
-                           System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                                              ": Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
-                } else if (!tipo1.equals(tipo2)) {
-                           System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                                              ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-                }else {
-                          boolean esFlotante = tipo1.equals("bromista"); // Determinar si es flotante
-                          String tipoResultado = esFlotante ? "bromista" : "rodolfo";
-
-                           String temp1 = ((Resultado) e1).temp;
-                           String temp2 = ((Resultado) e2).temp;
-                           String tempResultado;
-
-                if (esFlotante) {
-                    String tempResultadoF = parser.newFloatTemp();  // Nuevo temporal flotante
-
-                    switch (((Resultado) op).tipo) {
-                        case "navidad": // Suma flotante
-                            parser.gen("add.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "intercambio": // Resta flotante
-                            parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "nochebuena": // Multiplicación flotante
-                            parser.gen("mul.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "reyes": // División flotante
-                            parser.gen("div.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                            break;
-                        default:
-                            System.err.println("Error: Operación flotante no soportada.");
-                    }
-
-                    // **Manejar almacenamiento en la pila**
-                    if (!tempResultadoF.startsWith("$")) {
-                        // Si no es un registro flotante válido, usar la pila
-                        parser.storeVariable(tempResultadoF, tempResultadoF);
-                    }
-
-                    tempResultado = tempResultadoF;
+                if (e1 == null || e2 == null) {
+                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                       ": Uno o ambos operandos de la operación binaria son nulos.");
+                                       errorCount++;
+                    RESULT = new Resultado("error", null);
                 } else {
-                    tempResultado = parser.newTemp();  // Usar registros $tX para enteros
-                    switch (((Resultado) op).tipo) {
-                        case "navidad":
-                            parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "intercambio":
-                            parser.gen("sub " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "nochebuena":
-                            parser.gen("mul " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "reyes":
-                            parser.gen("div " + temp1 + ", " + temp2);
-                            parser.gen("mflo " + tempResultado);
-                            break;
-                        case "magos":
-                            parser.gen("div " + temp1 + ", " + temp2);
-                            parser.gen("mfhi " + tempResultado);
-                            break;
-                        default:
-                            System.err.println("Error: Operación entera no soportada.");
+
+                    String tipo1 = ((Resultado) e1).tipo;
+                    String tipo2 = ((Resultado) e2).tipo;
+
+                    // Validar los tipos de los operandos
+                    if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
+                              (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
+                               System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                                  ": Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
+                    } else if (!tipo1.equals(tipo2)) {
+                               System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                                  ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                    }else {
+                              boolean esFlotante = tipo1.equals("bromista"); // Determinar si es flotante
+                              String tipoResultado = esFlotante ? "bromista" : "rodolfo";
+
+                               String temp1 = ((Resultado) e1).temp;
+                               String temp2 = ((Resultado) e2).temp;
+                               String tempResultado;
+
+                    if (esFlotante) {
+                        String tempResultadoF = parser.newFloatTemp();  // Nuevo temporal flotante
+
+                        switch (((Resultado) op).tipo) {
+                            case "navidad": // Suma flotante
+                                parser.gen("add.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                break;
+                            case "intercambio": // Resta flotante
+                                parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                break;
+                            case "nochebuena": // Multiplicación flotante
+                                parser.gen("mul.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                break;
+                            case "reyes": // División flotante
+                                parser.gen("div.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                break;
+                            default:
+                                System.err.println("Error: Operación flotante no soportada.");
+                        }
+
+                        // **Manejar almacenamiento en la pila**
+                        if (!tempResultadoF.startsWith("$")) {
+                            // Si no es un registro flotante válido, usar la pila
+                            parser.storeVariable(tempResultadoF, tempResultadoF);
+                        }
+
+                        tempResultado = tempResultadoF;
+                    } else {
+                        tempResultado = parser.newTemp();  // Usar registros $tX para enteros
+                        switch (((Resultado) op).tipo) {
+                            case "navidad":
+                                parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2);
+                                break;
+                            case "intercambio":
+                                parser.gen("sub " + tempResultado + ", " + temp1 + ", " + temp2);
+                                break;
+                            case "nochebuena":
+                                parser.gen("mul " + tempResultado + ", " + temp1 + ", " + temp2);
+                                break;
+                            case "reyes":
+                                parser.gen("div " + temp1 + ", " + temp2);
+                                parser.gen("mflo " + tempResultado);
+                                break;
+                            case "magos":
+                                parser.gen("div " + temp1 + ", " + temp2);
+                                parser.gen("mfhi " + tempResultado);
+                                break;
+                            default:
+                                System.err.println("Error: Operación entera no soportada.");
+                        }
                     }
-                }
-                    // Asignar el resultado con el tipo y el temporal generado
-                    RESULT = new Resultado(tipoResultado, tempResultado);
+                        // Asignar el resultado con el tipo y el temporal generado
+                        RESULT = new Resultado(tipoResultado, tempResultado);
+                    }
                 }
             :}
            | expresion:e1 operador_relacional:op expresion:e2
@@ -1496,22 +1523,6 @@ return_stmt ::= RETURN expresion:e
                 }
             :}
               | RETURN
-                {:
-                    Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                    int line = symbol.left;
-                    int column = symbol.right;
-
-                    String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, line, column);
-
-                    if (!tipoFuncion.equals("void")) {
-                        System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                           ": La función requiere un valor de retorno de tipo '" + tipoFuncion + "', pero se encontró 'void'.");
-                    } else {
-                        System.out.println("Retorno válido en función de tipo void.");
-                        parser.gen("jr $ra");
-                        RESULT = new Resultado("void", null);
-                    }
-                :}
               | RETURN error
                 {:
                     System.err.println("Error: Retorno inválido.");
