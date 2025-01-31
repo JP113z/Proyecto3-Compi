@@ -5,11 +5,13 @@ abrecuento
 
 #baltazar 10.34 finregalo
 
-5 navidad 10 finregalo
+#5 navidad 10 finregalo
 
-15.445  evergreen 1.234 finregalo
+#15.445  evergreen 1.234 finregalo
 
-#bromista _float_ entrega 8.9 finregalo
+rodolfo _float_ entrega  10 magos 3 finregalo
+
+narra abreregalo _float_ cierraregalo finregalo
 
 #3.445 navidad 1.234 finregalo
 

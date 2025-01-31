@@ -973,6 +973,12 @@ public class parser extends java_cup.runtime.lr_parser {
         return temp;
     }
 
+    public String loadVariableFloat(String variable) {
+        String temp = newFloatTemp();
+        gen("lwc1 " + temp + ", " + getVariableAddress(variable));
+        return temp;
+    }
+
     // Guardar valor de un registro en la pila
     public void storeVariable(String variable, String register) {
         if (register == null || !register.startsWith("$")) {
@@ -1816,13 +1822,16 @@ class CUP$parser$actions {
                 ? ((Resultado) e).tipo
                 : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
             String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
-
             if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
                 System.err.println("Error: Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
             } else {
                 if (temp != null) {
                     if (parser.variableOffset.containsKey(temp)) {
-                        temp = parser.loadVariable(temp);  // Cargar variable desde la pila
+                        if (tipo.equals("bromista")) {
+                            temp = parser.loadVariableFloat(temp); // Cargar flotante
+                        } else {
+                            temp = parser.loadVariable(temp); // Cargar variable desde la pila
+                        }
                     }
 
                     if (tipo.equals("cometa")) {
@@ -2129,11 +2138,19 @@ class CUP$parser$actions {
                 String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash),
                                                e.toString(), symbol.left, symbol.right);
 
-                if (tipo != null) {
-                    if (parser.variableOffset.containsKey(e.toString())) {
-                        // Cargar valor de la pila a un temporal antes de usarlo
-                        String temp = parser.loadVariable(e.toString());
-                        RESULT = new Resultado(tipo, temp);
+                 if (tipo != null) {
+                     if (parser.variableOffset.containsKey(e.toString())) {
+                          System.out.println("[DEBUG] Variable '" + e + "' encontrada en la pila.");
+
+                          String temp;
+                          if (tipo.equals("bromista")) {
+                                System.out.println("[DEBUG] Cargando flotante con loadVariableFloat()");
+                                temp = parser.loadVariableFloat(e.toString()); // Cargar flotante correctamente
+                          } else {
+                                System.out.println("[DEBUG] Cargando entero o carácter con loadVariable()");
+                                temp = parser.loadVariable(e.toString()); // Cargar variable estándar
+                           }
+                            RESULT = new Resultado(tipo, temp);
                     } else {
                         System.err.println("Error: Variable '" + e + "' no tiene espacio en la pila.");
                         RESULT = new Resultado("error", null);
@@ -2295,22 +2312,31 @@ class CUP$parser$actions {
                         String tempResultadoF = parser.newFloatTemp();  // Nuevo temporal flotante
 
                         switch (((Resultado) op).tipo) {
-                            case "navidad": // Suma flotante
+                            case "navidad": // Suma
                                 parser.gen("add.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
                                 break;
-                            case "intercambio": // Resta flotante
+                            case "intercambio": // Resta
                                 parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
                                 break;
-                            case "nochebuena": // Multiplicación flotante
+                            case "nochebuena": // Multiplicación
                                 parser.gen("mul.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
                                 break;
-                            case "reyes": // División flotante
+                            case "reyes": // División
                                 parser.gen("div.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
                                 break;
+                            case "magos": // MODULO flotante: a % b = a - (trunc(a / b) * b)
+                                 String tempDiv = parser.newFloatTemp();
+                                 String tempTrunc = parser.newFloatTemp();
+                                 String tempMul = parser.newFloatTemp();   // Almacena (a / b) * b
+                                 parser.gen("div.s " + tempDiv + ", " + temp1 + ", " + temp2);  //a / b
+                                 parser.gen("floor.w.s " + tempTrunc + ", " + tempDiv);
+                                 parser.gen("cvt.s.w " + tempTrunc + ", " + tempTrunc);
+                                 parser.gen("mul.s " + tempMul + ", " + tempTrunc + ", " + temp2);
+                                 parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + tempMul);
+                                 break;
                             default:
                                 System.err.println("Error: Operación flotante no soportada.");
                         }
-
                         // **Manejar almacenamiento en la pila**
                         if (!tempResultadoF.startsWith("$")) {
                             // Si no es un registro flotante válido, usar la pila
@@ -2338,6 +2364,23 @@ class CUP$parser$actions {
                                 parser.gen("div " + temp1 + ", " + temp2);
                                 parser.gen("mfhi " + tempResultado);
                                 break;
+                             case "adviento": // POTENCIA: a^b
+                                 String tempCounter = parser.newTemp();  // Contador de lasiteraciones (b)
+                                 String tempOne = parser.newTemp();
+                                 parser.gen("li " + tempOne + ", 1");
+                                 parser.gen("move " + tempResultado + ", " + tempOne); // Inicializar resultado en 1
+                                 String labelPowEnd = "pow_end_" + parser.currentTemp++;
+                                 parser.gen("beqz " + temp2 + ", " + labelPowEnd);
+                                 // Bucle de multiplicación: resultado *= base
+                                 String labelPowLoop = "pow_loop_" + parser.currentTemp++;
+                                 parser.gen("move " + tempCounter + ", " + temp2);
+                                 parser.gen(labelPowLoop + ":");
+                                 parser.gen("mul " + tempResultado + ", " + tempResultado + ", " + temp1);
+                                 parser.gen("addi " + tempCounter + ", " + tempCounter + ", -1"); // Decrementar exponente
+                                 parser.gen("bgtz " + tempCounter + ", " + labelPowLoop); // Repetir si exponente es mayor a 0
+                                 parser.gen(labelPowEnd + ":");  // Etiqueta de fin
+                                 parser.gen("move " + tempResultado + ", " + tempResultado);
+                                 break;
                             default:
                                 System.err.println("Error: Operación entera no soportada.");
                         }
