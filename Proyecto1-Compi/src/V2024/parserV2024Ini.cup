@@ -31,29 +31,55 @@ parser code {:
     public String etiquetaTrue;
     public String etiquetaEndIf;
     public String etiquetaEndElse;
+    public String etiquetaInicioWhile;
+    public String etiquetaEndWhile;
 
     StringBuffer codMIPS = new StringBuffer();
     StringBuffer dataSection = new StringBuffer();
 
     private int maxTemp = 9;          // Máximo índice para registros temporales ($t0 - $t9)
-    private int currentTemp = 0;      // Contador de registros temporales
-    private int maxSecondary = 7;     // Máximo índice para registros secundarios ($s0 - $s7)
-    private int currentSecondary = 0; // Contador de registros secundarios
-    private int stackOffset = 0;      // Offset actual en la pila
+    private int currentTemp = 0;      // Contador actual de registros temporales
+    private int frameSize = 0;        // Tamaño actual del marco de pila
+    private Map<String, Integer> variableOffset = new HashMap<>();  // Mapa para offsets fijos de variables en la pila
 
+    // Obtener un registro temporal para operaciones intermedias
     public String newTemp() {
-        if (currentTemp <= maxTemp) {
-            // Usar registros temporales ($t0 - $t9)
-            return "$t" + currentTemp++;
-        } else if (currentSecondary <= maxSecondary) {
-            // Usar registros secundarios ($s0 - $s7)
-            return "$s" + currentSecondary++;
-        } else {
-            // Usar la pila para valores adicionales
-            stackOffset += 4;
-            gen("addi $sp, $sp, -4");
-            return "-" + stackOffset + "($sp)";
+        String temp = "$t" + (currentTemp % (maxTemp + 1));
+        currentTemp++;
+        return temp;
+    }
+
+    // Asignar espacio en la pila para una nueva variable
+    public void allocateVariable(String variable) {
+        if (variableOffset.containsKey(variable)) {
+            System.err.println("Error: Variable ya está asignada en la pila.");
+            return;
         }
+        frameSize += 4;  // Incrementar el tamaño del marco
+        variableOffset.put(variable, -frameSize);  // Asignar un offset fijo en el marco
+        gen("addi $sp, $sp, -4");  // Reservar espacio en la pila
+    }
+
+    // Obtener la dirección fija en la pila para una variable
+    public String getVariableAddress(String variable) {
+        Integer offset = variableOffset.get(variable);
+        if (offset == null) {
+            System.err.println("Error: Variable " + variable + " no encontrada en la pila");
+            return "0($sp)";  // Dirección por defecto en caso de error
+        }
+        return offset + "($fp)";
+    }
+
+    // Cargar variable de la pila a un registro temporal
+    public String loadVariable(String variable) {
+        String temp = newTemp();
+        gen("lw " + temp + ", " + getVariableAddress(variable));
+        return temp;
+    }
+
+    // Guardar valor de un registro en la pila
+    public void storeVariable(String variable, String register) {
+        gen("sw " + register + ", " + getVariableAddress(variable));
     }
 
     public String newFloatTemp() {
@@ -92,27 +118,12 @@ parser code {:
             System.out.println(codigoCompleto.toString());
         }
 
-        public void asignarCodigoMIPS(String id, String temp) {
-            if (temp == null) {
-                System.err.println("Error: temp no puede ser nulo");
-                return;
-            }
-
-            String regDestino = getOrAssignRegister(id);  // Obtener o asignar un registro para la variable
-            gen("move " + regDestino + ", " + temp);  // Mover el resultado a la variable
-        }
-
         public void declararString(String id, String valor) {
             if (!dataSectionGenerated) {
                 dataSection.append(".data\n"); // Asegurarse de que la sección .data se genere al inicio
                 dataSectionGenerated = true;
             }
             dataSection.append(id + ": .asciiz \"" + valor + "\"\n");}
-
-
-        public void usarString(String id, String registro) {
-            gen("la " + registro + ", " + id); // Cargar la dirección del string en un registro
-        }
 
        public void textSection() {
            if (!textSectionGenerated) {
@@ -128,23 +139,6 @@ parser code {:
                 dataSectionGenerated = true;
            }
          }
-
-    // Mapa para asociar variables con registros
-    private Map<String, String> variableToRegister = new HashMap<>();
-
-    // Devuelve el registro donde está almacenada la variable, o asigna uno nuevo si es necesario
-    public String getOrAssignRegister(String variable) {
-        if (!variableToRegister.containsKey(variable)) {
-            String temp = newTemp(); // Asignar un nuevo registro temporal
-            variableToRegister.put(variable, temp);
-        }
-        return variableToRegister.get(variable);
-    }
-
-    // Método para obtener el registro asociado a una variable (si existe)
-    public String getRegisterForVariable(String variable) {
-        return variableToRegister.get(variable); // Retorna null si no existe
-    }
 
     public String obtenerValorString(String id) {
         // Buscar el string declarado en .data y devolver su valor
@@ -509,87 +503,81 @@ sentencia ::= declaracion FIN_EXPRESION
             | read FIN_EXPRESION
             | error FIN_EXPRESION
             ;
-print::= PRINT PARENTESISAPERTURA expresion:e PARENTESISCIERRE
+print ::= PRINT PARENTESISAPERTURA expresion:e PARENTESISCIERRE
         {:
-        Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
-        int line = symbol.left;
-        int column = symbol.right;
+            Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+            int line = symbol.left;
+            int column = symbol.right;
 
-        // Obtener el tipo y temporal de la expresión
-        String tipo = (e instanceof Resultado)
-            ? ((Resultado) e).tipo
-            : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
-        String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
+            String tipo = (e instanceof Resultado)
+                ? ((Resultado) e).tipo
+                : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
+            String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
 
-        // Validar que el tipo sea compatible con `print`
-        if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
-            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                               ": Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
-        } else {
-            if (temp != null) {
-                if (tipo.equals("cometa")) {
-                    parser.gen("la $a0, " + temp);  // Cargar la dirección de la cadena
-                    parser.gen("li $v0, 4");        // Print string
-                } else if (tipo.equals("bromista")) {
-                    parser.gen("li $v0, 2");
-                    parser.gen("mtc1 $t0, $f12");
-                    //parser.gen("nop"); // Evitar problemas con mtc1
-                } else {
-                    parser.gen("move $a0, " + temp); // Mover valores numéricos
-                    switch (tipo) {
-                        case "rodolfo": // Entero
-                            parser.gen("li $v0, 1");
-                            break;
-                        case "cupido": // Carácter
-                            parser.gen("li $v0, 11");
-                            break;
-                    }
-                }
-                parser.gen("syscall");
-            }
-        }
-
-        RESULT = new Resultado(tipo, temp);
-         :};
-
-read::= READ PARENTESISAPERTURA expresion:e PARENTESISCIERRE
-        {:
-        Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
-        int line = symbol.left;
-        int column = symbol.right;
-
-        String tipo = (e instanceof Resultado)
-            ? ((Resultado) e).tipo
-            : parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
-        String temp = (e instanceof Resultado) ? ((Resultado) e).temp : null;
-
-        if ((!tipo.equals("rodolfo") && !tipo.equals("bromista"))) {
-            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                               ": El read solo lee enteros o flotantes.");
-        } else {
-            String tempRead = parser.newTemp();
-            switch (tipo) {
-                case "rodolfo":
-                    parser.gen("li $v0, 5");
-                    break;
-                case "bromista":
-                    parser.gen("li $v0, 6");
-                    break;
-            }
-            parser.gen("syscall");
-            if (tipo.equals("bromista")) {
-                   parser.gen("mtc1 $v0, " + tempRead);
-                   // parser.gen("cvt.s.w " + tempRead + ", " + tempRead);
+            if ((!tipo.equals("rodolfo") && !tipo.equals("bromista")) && !tipo.equals("cupido") && !tipo.equals("cometa")) {
+                System.err.println("Error: Solo puede usar el print con enteros, flotantes, cadenas y caracteres.");
             } else {
-                  parser.gen("move " + tempRead + ", $v0");
+                if (temp != null) {
+                    if (parser.variableOffset.containsKey(temp)) {
+                        temp = parser.loadVariable(temp);  // Cargar variable desde la pila
+                    }
+
+                    if (tipo.equals("cometa")) {
+                        parser.gen("la $a0, " + temp);
+                        parser.gen("li $v0, 4");
+                    } else if (tipo.equals("bromista")) {
+                        parser.gen("mtc1 " + temp + ", $f12");
+                        parser.gen("li $v0, 2");
+                    } else {
+                        parser.gen("move $a0, " + temp);
+
+                        switch (tipo) {
+                            case "rodolfo":
+                                parser.gen("li $v0, 1");
+                                break;
+                            case "cupido":
+                                parser.gen("li $v0, 11");
+                                break;
+                        }
+                    }
+                    parser.gen("syscall");
+                }
             }
 
-            if (temp != null) {
-                parser.asignarCodigoMIPS(temp, tempRead);
-            }
+            RESULT = new Resultado(tipo, temp);
+        :};
 
-            RESULT = new Resultado(tipo, tempRead);
-        }
+read ::= READ PARENTESISAPERTURA IDENTIFICADOR:id PARENTESISCIERRE
+        {:
+            Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+            int line = symbol.left;
+            int column = symbol.right;
+
+            String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), id.toString(), line, column);
+
+            if ((!tipo.equals("rodolfo") && !tipo.equals("bromista"))) {
+                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                   ": El read solo lee enteros o flotantes.");
+            } else {
+                String tempReg = parser.newTemp();
+
+                switch (tipo) {
+                    case "rodolfo":
+                        parser.gen("li $v0, 5");
+                        parser.gen("syscall");
+                        parser.gen("move " + tempReg + ", $v0");
+                        break;
+                    case "bromista":
+                        parser.gen("li $v0, 6");
+                        parser.gen("syscall");
+                        parser.gen("mfc1 " + tempReg + ", $f0");
+                        break;
+                }
+
+                // Guardar el valor leído en la pila
+                parser.storeVariable(id.toString(), tempReg);
+                RESULT = new Resultado(tipo, id.toString());
+            }
         :};
 
 declaracion ::= tipo:t IDENTIFICADOR:id
@@ -600,22 +588,27 @@ declaracion ::= tipo:t IDENTIFICADOR:id
                 String tipoVar = ((Resultado) t).tipo;
 
                 if (tipoVar.equals("cometa")) {
-                    // Declarar el string en .data
                     parser.declararString(id.toString(), " ");
                 } else {
-                    // Asignar un registro temporal a la variable
-                    String reg = parser.getOrAssignRegister(id.toString());
-                    parser.gen("li " + reg + ", 0"); // Inicializar la variable con 0
+                    // Solo asignamos espacio si la variable no ha sido declarada antes
+                    if (!parser.variableOffset.containsKey(id.toString())) {
+                        parser.allocateVariable(id.toString());
+                    }
+
+                    // Usar un temporal para inicializar el valor en la pila
+                    String temp = parser.newTemp();
+                    parser.gen("li " + temp + ", 0");  // Inicializar en 0
+                    parser.storeVariable(id.toString(), temp);  // Guardar en la pila
                 }
             :}
-        | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
+          | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
             {:
                 Symbol symbol = (Symbol) CUP$parser$stack.peek();
                 parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
                 String tipoVar = ((Resultado) t).tipo;
                 String tipoExpresion = ((Resultado) e).tipo;
-                String valorExpresion = ((Resultado) e).temp;
+                String tempExpresion = ((Resultado) e).temp;
 
                 if (tipoVar.equals("cometa")) {
                     // Usar el identificador del string directamente
@@ -628,15 +621,18 @@ declaracion ::= tipo:t IDENTIFICADOR:id
                     parser.gen("la $a0, " + id.toString()); // Cargar la dirección del string
                     parser.gen("li $v0, 4"); // Syscall para imprimir cadenas
                     parser.gen("syscall");
-                } else if (tipoVar.equals("bromista")) {
-                      String regFloat = parser.newFloatTemp();  // Generar registro flotante en vez de uno entero
-                      parser.gen("mov.s " + regFloat + ", " + valorExpresion);
-                      parser.asignarCodigoMIPS(id.toString(), regFloat);
-                  }else {
-                    String reg = parser.getOrAssignRegister(id.toString());
-                    parser.gen("move " + reg + ", " + ((Resultado) e).temp);
+                }else if (tipoVar.equals("bromista")) {
+                    String regFloat = parser.newFloatTemp();  // Obtener un registro flotante
+                    parser.gen("mov.s " + regFloat + ", " + tempExpresion); // Mover el valor a registro flotante
+                    parser.storeVariable(id.toString(), regFloat);  // Guardar en la pila
                 }
-
+                else {
+                    // Si la variable no ha sido asignada, reservar espacio en la pila
+                    if (!parser.variableOffset.containsKey(id.toString())) {
+                        parser.allocateVariable(id.toString());
+                    }
+                    parser.storeVariable(id.toString(), tempExpresion);
+                }
                 // Validación semántica de tipos
                 int line = symbol.left;
                 int column = symbol.right;
@@ -649,10 +645,9 @@ declaracion ::= tipo:t IDENTIFICADOR:id
                     System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
                                        "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
                 }
-            :}
+           :}
         | arreglo
         | tipo error;
-
 
 tipo ::= INTEGER{: RESULT = new Resultado("rodolfo", null); :}
     | STRING{: RESULT = new Resultado("cometa", null); :}
@@ -661,60 +656,44 @@ tipo ::= INTEGER{: RESULT = new Resultado("rodolfo", null); :}
     | BOOL{: RESULT = new Resultado("trueno", null); :};
 
 asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
-                {:
-                // Obtener el símbolo para extraer línea y columna
+            {:
                 Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
-                int line = symbol.left;
-                int column = symbol.right;
-
-                // Obtener el tipo del identificador
                 String tipoIdentificador = parser.getTipo(
-                        parser.listaTablasSimbolos.get(parser.currentHash), id.toString(), line, column);
+                    parser.listaTablasSimbolos.get(parser.currentHash), id.toString(), symbol.left, symbol.right);
 
-                // Obtener el tipo y temporal de la expresión
-                Resultado resultadoExp = (Resultado) exp;
-                String tipoExpresion = resultadoExp.tipo;
-                String tempExpresion = resultadoExp.temp;
-
-                // Validar que la variable ha sido declarada (tiene un registro asignado)
-                String regDestino = parser.getRegisterForVariable(id.toString());
-
-                if (regDestino == null) {
-                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                       ": Variable '" + id + "' no ha sido declarada antes de la asignación.");
-                } else if (!tipoIdentificador.equals(tipoExpresion)) {
-                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                       ": Asignación inválida. Variable '" + id +
-                                       "' es de tipo " + tipoIdentificador + ", pero se le asignó un valor de tipo " + tipoExpresion + ".");
-                } else {
-                    System.out.println("Asignación válida: '" + id + "' de tipo '" + tipoIdentificador +
-                                       "' con valor de tipo '" + tipoExpresion + "'.");
-
-                    // Generación de código MIPS
-                    if (tempExpresion != null) {
-                        parser.gen("move " + regDestino + ", " + tempExpresion); // Asignar el valor al registro correcto
+                if (tipoIdentificador != null) {
+                    // Verificar si la variable está en la pila antes de almacenarla
+                    if (parser.variableOffset.containsKey(id.toString())) {
+                        parser.storeVariable(id.toString(), ((Resultado) exp).temp);
                     } else {
-                        System.err.println("Error: El temporal de la expresión es null.");
+                        System.err.println("Error: Variable '" + id + "' no tiene espacio reservado en la pila.");
                     }
                 }
-              :}
+            :}
              | IDENTIFICADOR ASIGNA error
              | error;
 
 expresion ::= literal:e {: RESULT = e; :}
-         | IDENTIFICADOR:e
-             {:
-                 // Obtener el símbolo directamente desde el stack
-                 Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                 int line = symbol.left;
-                 int column = symbol.right;
+            | IDENTIFICADOR:e
+            {:
+                Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash),
+                                               e.toString(), symbol.left, symbol.right);
 
-                 String tipo = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), e.toString(), line, column);
-                 String temp = parser.newTemp();
-                parser.gen("lw " + temp + ", " + e);
-                 // Asignar el tipo y el temporal al resultado
-                 RESULT = new Resultado(tipo, temp);
-             :}
+                if (tipo != null) {
+                    if (parser.variableOffset.containsKey(e.toString())) {
+                        // Cargar valor de la pila a un temporal antes de usarlo
+                        String temp = parser.loadVariable(e.toString());
+                        RESULT = new Resultado(tipo, temp);
+                    } else {
+                        System.err.println("Error: Variable '" + e + "' no tiene espacio en la pila.");
+                        RESULT = new Resultado("error", null);
+                    }
+                } else {
+                    System.err.println("Error: Variable '" + e + "' no ha sido declarada.");
+                    RESULT = new Resultado("error", null);
+                }
+            :}
          | llamada_funcion:f {: RESULT = f; :}
          | expresion:e1 operador_unario:op
              {:
@@ -1063,6 +1042,16 @@ if_stmt ::= if_stmt_cabecera if_stmt_aux;
 
 if_stmt_cabecera ::= IF PARENTESISAPERTURA expresion:e PARENTESISCIERRE
             {:
+            if (e == null) {
+                Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 2);
+                int line = symbol.left;
+                int column = symbol.right;
+
+                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                   ": Se ha intentado utilizar una expresión con valor nulo en el if.");
+                errorCount++;
+            } else {
+
                   parser.etiquetaTrue = "_etiqueta_true_" + parser.currentTemp++;
                   parser.etiquetaEndIf = "_etiqueta_end_if" + parser.currentTemp++;
                   parser.etiquetaEndElse = "_etiqueta_end_else" + parser.currentTemp++;
@@ -1071,6 +1060,7 @@ if_stmt_cabecera ::= IF PARENTESISAPERTURA expresion:e PARENTESISCIERRE
                   parser.gen("j " + etiquetaEndIf);
 
                   parser.gen(etiquetaTrue + ":");
+            }
             :}
           | IF PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura
           | IF PARENTESISAPERTURA expresion PARENTESISCIERRE error ELSE bloqueEstructura
@@ -1092,8 +1082,38 @@ if_else_stmt ::= bloqueEstructura
                    parser.gen(parser.etiquetaEndElse + ":");
                  :};
 
-while_stmt ::= WHILE PARENTESISAPERTURA expresion PARENTESISCIERRE bloqueEstructura
+while_stmt ::= WHILE PARENTESISAPERTURA
+               {:
+                   parser.etiquetaInicioWhile = "_while_start_" + parser.currentTemp++;
+                   parser.etiquetaEndWhile = "_while_end_" + parser.currentTemp++;
+
+                   // Generar la etiqueta de inicio del bucle
+                   parser.gen(parser.etiquetaInicioWhile + ":");
+               :}
+               expresion:e
+               {:
+                    if (e == null) {
+                        Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                        int line = symbol.left;
+                        int column = symbol.right;
+
+                        System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                           ": Se ha intentado utilizar una expresión con valor nulo.");
+                        errorCount++;
+                    }
+                    else {
+                   // Generar la condición del bucle
+                   parser.gen("beq " + ((Resultado) e).temp + ", $zero, " + parser.etiquetaEndWhile);
+                   }
+               :}
+               PARENTESISCIERRE bloqueEstructura
+               {:
+                   // Generar el código del cuerpo del bucle
+                   parser.gen("j " + parser.etiquetaInicioWhile); // Volver al inicio
+                   parser.gen(parser.etiquetaEndWhile + ":");    // Etiqueta de salida
+               :}
              | WHILE PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura;
+
 
 for_stmt ::= FOR PARENTESISAPERTURA declaracion FIN_EXPRESION expresion FIN_EXPRESION expresion PARENTESISCIERRE bloqueEstructura
            | FOR PARENTESISAPERTURA asignacion FIN_EXPRESION expresion FIN_EXPRESION expresion PARENTESISCIERRE bloqueEstructura
