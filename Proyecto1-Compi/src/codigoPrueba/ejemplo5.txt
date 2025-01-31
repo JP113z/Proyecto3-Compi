@@ -3,7 +3,9 @@ abrecuento
 
 5 navidad 10 finregalo
 
-3.445 navidad 1.234 finregalo
+15.445  evergreen 1.234 finregalo
+
+#3.445 navidad 1.234 finregalo
 
 #escucha abreregalo 15.786 cierraregalo finregalo
 
@@ -19,7 +21,7 @@ abrecuento
 
 #narra abreregalo 'd' cierraregalo finregalo
 
-narra abreregalo 10.345 cierraregalo finregalo
+#narra abreregalo 10.345 cierraregalo finregalo
 
 #narra abreregalo 100 cierraregalo finregalo
 

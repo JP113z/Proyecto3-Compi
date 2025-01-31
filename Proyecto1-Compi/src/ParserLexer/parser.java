@@ -1811,8 +1811,8 @@ class CUP$parser$actions {
                         parser.gen("la $a0, " + temp);
                         parser.gen("li $v0, 4");
                     } else if (tipo.equals("bromista")) {
-                        parser.gen("mtc1 " + temp + ", $f12");
                         parser.gen("li $v0, 2");
+                        parser.gen("mov.s $f12, " + temp);
                     } else {
                         parser.gen("move $a0, " + temp);
 
@@ -2198,78 +2198,87 @@ class CUP$parser$actions {
 		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-               // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
-               Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
-               Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                           // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
+                           Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                           Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
 
-               int line1 = symbol1.left;
-               int column1 = symbol1.right;
-               int line2 = symbol2.left;
-               int column2 = symbol2.right;
+                           int line1 = symbol1.left;
+                           int column1 = symbol1.right;
+                           int line2 = symbol2.left;
+                           int column2 = symbol2.right;
 
-              // Acceder a los tipos de los operandos desde los objetos Resultado
-              String tipo1 = ((Resultado) e1).tipo;
-              String tipo2 = ((Resultado) e2).tipo;
+                          // Acceder a los tipos de los operandos desde los objetos Resultado
+                          String tipo1 = ((Resultado) e1).tipo;
+                          String tipo2 = ((Resultado) e2).tipo;
 
-              // Debug: Verificar los tipos antes de la evaluación
-              // System.out.println("DEBUG - e1: " + tipo1  + ", tipo2: " + tipo2);
+                          // Debug: Verificar los tipos antes de la evaluación
+                          // System.out.println("DEBUG - e1: " + tipo1  + ", tipo2: " + tipo2);
 
-              // Validar los tipos de los operandos
-              if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
-                         (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
-                          System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                                  ": Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
-              } else if (!tipo1.equals(tipo2)) {
-                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                                  ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-              }else {
-                      boolean esFlotante = tipo1.equals("bromista"); // Determinar si es flotante
-                      String tipoResultado = esFlotante ? "bromista" : "rodolfo";
+                          // Validar los tipos de los operandos
+                          if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
+                                     (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
+                                      System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                              ": Operandos deben ser enteros (rodolfo) o flotantes (bromista).");
+                          } else if (!tipo1.equals(tipo2)) {
+                                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                              ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                          }else {
+                                  boolean esFlotante = tipo1.equals("bromista"); // Determinar si es flotante
+                                  String tipoResultado = esFlotante ? "bromista" : "rodolfo";
 
-                      String temp1 = ((Resultado) e1).temp;
-                      String temp2 = ((Resultado) e2).temp;
-                      String tempResultado;
+                                  String temp1 = ((Resultado) e1).temp;
+                                  String temp2 = ((Resultado) e2).temp;
+                                  String tempResultado;
 
-                      if (esFlotante) {
-                          String tempResultadoF = parser.newFloatTemp();  // Usar solo registros $fX
-                          switch (((Resultado) op).tipo) {
-                                 case "navidad": parser.gen("add.s " + tempResultadoF + ", " + tempResultadoF + ", $f4"); break;
-                                 case "intercambio": parser.gen("sub.s " + tempResultadoF + ", " + tempResultadoF + ", $f4"); break;
-                                 case "nochebuena": parser.gen("mul.s " + tempResultadoF + ", " + tempResultadoF + ", $f4"); break;
-                                 case "reyes": parser.gen("div.s " + tempResultadoF + ", " + tempResultadoF + ", $f4"); break;
-                                 default: System.err.println("Error: Operación flotante no soportada.");
-                          }
-                            tempResultado = tempResultadoF;
-                       } else {
-                            tempResultado = parser.newTemp();  // Usar registros $tX
-                            switch (((Resultado) op).tipo) {
-                                 case "navidad":  parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2); break;
-                                 case "intercambio": parser.gen("sub " + tempResultado + ", " + temp1 + ", " + temp2); break;
-                                 case "nochebuena": parser.gen("mul " + tempResultado + ", " + temp1 + ", " + temp2); break;
-                                 case "reyes":
-                                       parser.gen("div " + temp1 + ", " + temp2);
-                                       parser.gen("mflo " + tempResultado);
-                                 break;
-                                        case "magos":
-                                            parser.gen("div " + temp1 + ", " + temp2);
-                                            parser.gen("mfhi " + tempResultado);
-                                            break;
-                                 default:
-                                 System.err.println("Error: Operación entera no soportada.");
-                        }
-                      }
-                          RESULT = new Resultado(tipoResultado, tempResultado);
-                 }
-                 String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
+                                  if (esFlotante) {
+                                      String tempResultadoF = parser.newFloatTemp();  // Nuevo temporal flotante
+                                      switch (((Resultado) op).tipo) {
+                                          case "navidad":
+                                              parser.gen("add.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                              break;
+                                          case "intercambio":
+                                              parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                              break;
+                                          case "nochebuena":
+                                              parser.gen("mul.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                              break;
+                                          case "reyes":
+                                              parser.gen("div.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                                              break;
+                                          default:
+                                              System.err.println("Error: Operación flotante no soportada.");
+                                      }
+                                      tempResultado = tempResultadoF;
+                                  } else {
+                                        tempResultado = parser.newTemp();  // Usar registros $tX
+                                        switch (((Resultado) op).tipo) {
+                                             case "navidad":  parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2); break;
+                                             case "intercambio": parser.gen("sub " + tempResultado + ", " + temp1 + ", " + temp2); break;
+                                             case "nochebuena": parser.gen("mul " + tempResultado + ", " + temp1 + ", " + temp2); break;
+                                             case "reyes":
+                                                   parser.gen("div " + temp1 + ", " + temp2);
+                                                   parser.gen("mflo " + tempResultado);
+                                             break;
+                                                    case "magos":
+                                                        parser.gen("div " + temp1 + ", " + temp2);
+                                                        parser.gen("mfhi " + tempResultado);
+                                                        break;
+                                             default:
+                                             System.err.println("Error: Operación entera no soportada.");
+                                    }
+                                  }
+                                      RESULT = new Resultado(tipoResultado, tempResultado);
+                             }
+                             String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
 
-                  // Generar un temporal para la operación
-                 String temp1 = ((Resultado) e1).temp;
-                 String temp2 = ((Resultado) e2).temp;
-                 String tempResult = parser.newTemp();
+                              // Generar un temporal para la operación
+                             String temp1 = ((Resultado) e1).temp;
+                             String temp2 = ((Resultado) e2).temp;
+                             String tempResult = parser.newTemp();
 
-              // Asignar el resultado con el tipo y el temporal generado
-                RESULT = new Resultado(tipoResultado, tempResult);
-         
+                          // Asignar el resultado con el tipo y el temporal generado
+                            RESULT = new Resultado(tipoResultado, tempResult);
+                     
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2288,91 +2297,122 @@ class CUP$parser$actions {
 		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
-                Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
-                Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
-                int line1 = symbol1.left;
-                int column1 = symbol1.right;
-                int line2 = symbol2.left;
-                int column2 = symbol2.right;
-                String operador = ((Resultado) op).tipo;
-                // Obtener los tipos desde los objetos Resultado
-                if (e1 == null) {
-                    e1 = new Resultado("null", null);
-                }
-                if (e2 == null) {
-                    e2 = new Resultado("null", null);
-                }
-                String tipo1 = ((Resultado) e1).tipo;
-                String tipo2 = ((Resultado) e2).tipo;
+                            // Obtener los símbolos correspondientes a `e1` y `e2` para extraer línea y columna
+                            Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                            Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                            int line1 = symbol1.left;
+                            int column1 = symbol1.right;
+                            int line2 = symbol2.left;
+                            int column2 = symbol2.right;
+                            String operador = ((Resultado) op).tipo;
+                            // Obtener los tipos desde los objetos Resultado
+                            if (e1 == null) {
+                                e1 = new Resultado("null", null);
+                            }
+                            if (e2 == null) {
+                                e2 = new Resultado("null", null);
+                            }
+                            String tipo1 = ((Resultado) e1).tipo;
+                            String tipo2 = ((Resultado) e2).tipo;
 
-                // Validar los tipos de los operandos
-                if (op.toString().equals("mary") || op.toString().equals("openslae")) {
-                    // Para `mary` y `openslae`, los tipos pueden ser enteros, flotantes o booleanos
-                    if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista") && !tipo1.equals("trueno")) ||
-                        (!tipo2.equals("rodolfo") && !tipo2.equals("bromista") && !tipo2.equals("trueno"))) {
-                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                           ": Operadores '" + operador + "' solo admiten enteros (rodolfo), flotantes (bromista) o booleanos (trueno).");
-                    } else if (!tipo1.equals(tipo2)) {
-                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                           ": Tipos incompatibles para operador '" + operador + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-                    } else {
-                    // Asignar el tipo resultante para comparaciones relacionales
-                    String temp1 = ((Resultado) e1).temp;
-                    String temp2 = ((Resultado) e2).temp;
-                    String tempResultado = parser.newTemp();
+                            // Validar los tipos de los operandos
+                            if (op.toString().equals("mary") || op.toString().equals("openslae")) {
+                                // Para `mary` y `openslae`, los tipos pueden ser enteros, flotantes o booleanos
+                                if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista") && !tipo1.equals("trueno")) ||
+                                    (!tipo2.equals("rodolfo") && !tipo2.equals("bromista") && !tipo2.equals("trueno"))) {
+                                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                       ": Operadores '" + operador + "' solo admiten enteros (rodolfo), flotantes (bromista) o booleanos (trueno).");
+                                } else if (!tipo1.equals(tipo2)) {
+                                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                       ": Tipos incompatibles para operador '" + operador + "'. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
+                                } else {
+                                // Asignar el tipo resultante para comparaciones relacionales
+                                String temp1 = ((Resultado) e1).temp;
+                                String temp2 = ((Resultado) e2).temp;
+                                String tempResultado = parser.newTemp();
 
-                    // Generación de código MIPS para la comparación
-                    switch (operador) {
-                        case "mary": // Igualdad
-                            parser.gen("seq " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "openslae": // Diferente
-                            parser.gen("sne " + tempResultado + ", " + temp1 + ", " + temp2);
-                        default:
-                            System.err.println("Error: Operador relacional no soportado.");
-                    }
-                    // Asignar el resultado con el tipo booleano (trueno) y el temporal generado
-                    RESULT = new Resultado("trueno", tempResultado);
-                    }
-                } else {
-                    // Validación para otros operadores relacionales
-                    if ((!tipo1.equals("rodolfo") && !tipo1.equals("bromista")) ||
-                        (!tipo2.equals("rodolfo") && !tipo2.equals("bromista"))) {
-                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                           ": Operadores '" + operador + "' solo admiten enteros (rodolfo) o flotantes (bromista).");
-                    } else if (!tipo1.equals(tipo2)) {
-                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
-                                           ": Tipos incompatibles entre los operandos. Operando 1: " + tipo1 + ", Operando 2: " + tipo2);
-                    } else {
-                        // Asignar el tipo resultante para comparaciones relacionales
-                    String temp1 = ((Resultado) e1).temp;
-                    String temp2 = ((Resultado) e2).temp;
-                    String tempResultado = parser.newTemp();
+                                // Generación de código MIPS para la comparación
+                                switch (operador) {
+                                    case "mary": // Igualdad
+                                        parser.gen("seq " + tempResultado + ", " + temp1 + ", " + temp2);
+                                        break;
+                                    case "openslae": // Diferente
+                                        parser.gen("sne " + tempResultado + ", " + temp1 + ", " + temp2);
+                                    default:
+                                        System.err.println("Error: Operador relacional no soportado.");
+                                }
+                                // Asignar el resultado con el tipo booleano (trueno) y el temporal generado
+                                RESULT = new Resultado("trueno", tempResultado);
+                                }
+                            } else {
+                                          // Identificar si la comparación es entre flotantes o enteros
+                                          boolean esFlotante = tipo1.equals("bromista");
 
-                    // Generación de código MIPS para la comparación
-                    switch (operador) {
-                        case "snowball": // Menor que
-                            parser.gen("slt " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "evergreen": // Menor o igual
-                            parser.gen("sle " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "minstix": // Mayor que
-                            parser.gen("sgt " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        case "upatree": // Mayor o igual
-                            parser.gen("sge " + tempResultado + ", " + temp1 + ", " + temp2);
-                            break;
-                        default:
-                            System.err.println("Error: Operador relacional no soportado.");
-                    }
+                                          // Obtener los temporales de los operandos
+                                          String temp1 = ((Resultado) e1).temp;
+                                          String temp2 = ((Resultado) e2).temp;
+                                          String tempResultado = parser.newTemp(); // Para almacenar el resultado booleano (1 o 0)
 
-                    // Asignar el resultado con el tipo booleano (trueno) y el temporal generado
-                    RESULT = new Resultado("trueno", tempResultado);
-                    }
-                }
-             
+                                          if (esFlotante) {
+                                              // Nuevo temporal flotante
+                                              String tempResultadoF = parser.newFloatTemp();
+                                              switch (operador) {
+                                                  case "snowball": //Menor que
+                                                      parser.gen("c.lt.s " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "evergreen": // Menor o igual
+                                                      parser.gen("c.le.s " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "minstix": // Mayor que
+                                                      parser.gen("c.lt.s " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "upatree": // Mayor o igual
+                                                      parser.gen("c.le.s " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "mary": // Igualdad
+                                                      parser.gen("c.eq.s " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "openslae": // Diferente
+                                                      parser.gen("c.eq.s " + temp1 + ", " + temp2);
+                                                      parser.gen("li " + tempResultado + ", 0");  // Inicializar en 0
+                                                      parser.gen("bc1f _falseLabel"); // Si es falso, saltar
+                                                      parser.gen("li " + tempResultado + ", 1");  // Si es cierto, asignar 1
+                                                      parser.gen("_falseLabel:");
+                                                      break;
+                                                  default:
+                                                      System.err.println("Error: Operador relacional no soportado.");
+                                              }
+
+                                          } else {
+                                              // Generación de código MIPS para comparaciones de enteros
+                                              switch (operador) {
+                                                  case "snowball": // Menor que
+                                                      parser.gen("slt " + tempResultado + ", " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "evergreen": // Menor o igual
+                                                      parser.gen("sle " + tempResultado + ", " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "minstix": // Mayor que
+                                                      parser.gen("sgt " + tempResultado + ", " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "upatree": // Mayor o igual
+                                                      parser.gen("sge " + tempResultado + ", " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "mary": // Igualdad
+                                                      parser.gen("seq " + tempResultado + ", " + temp1 + ", " + temp2);
+                                                      break;
+                                                  case "openslae": // Diferente
+                                                      parser.gen("sne " + tempResultado + ", " + temp1 + ", " + temp2);
+                                                      break;
+                                                  default:
+                                                      System.err.println("Error: Operador relacional no soportado.");
+                                              }
+                                          }
+
+                                          RESULT = new Resultado("trueno", tempResultado);
+                                      }
+
+          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2510,17 +2550,16 @@ class CUP$parser$actions {
 		int fright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object f = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-        Symbol symbol = (Symbol) CUP$parser$stack.peek();
-        String tempFloat = parser.newTemp();
-        parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "rodolfo");
-        String ieee754Hex = parser.floatToIEEE754(symbol.value.toString());
+           Symbol symbol = (Symbol) CUP$parser$stack.peek();
+           String tempInt = parser.newTemp();
+           String tempFloat = parser.newFloatTemp(); // Registro flotante
 
-        parser.gen("li $t0, " + ieee754Hex);   // Cargar IEEE 754 en $t0
-        //parser.gen("mtc1 $t0, " + tempFloat);  // Mover a registro flotante
-        // parser.gen("cvt.s.w " + tempFloat + ", " + tempFloat);
-
-        RESULT = new Resultado("bromista", tempFloat);
-   
+           parser.agregarVariable(symbol.left, symbol.right, symbol.value.toString(), "bromista");
+           String ieee754Hex = parser.floatToIEEE754(symbol.value.toString());
+           parser.gen("li " + tempInt + ", " + ieee754Hex); // Cargar valor IEEE 754 en un registro entero
+           parser.gen("mtc1 " + tempInt + ", " + tempFloat); // Moverlo a un registro flotante
+           RESULT = new Resultado("bromista", tempFloat);
+    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("literal",9, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
