@@ -934,6 +934,7 @@ public class parser extends java_cup.runtime.lr_parser {
 
     private int maxTemp = 9;          // Máximo índice para registros temporales ($t0 - $t9)
     private int currentTemp = 0;      // Contador actual de registros temporales
+    private int currentFloatTemp = 0;
     private int frameSize = 0;        // Tamaño actual del marco de pila
     private Map<String, Integer> variableOffset = new HashMap<>();  // Mapa para offsets fijos de variables en la pila
 
@@ -974,15 +975,32 @@ public class parser extends java_cup.runtime.lr_parser {
 
     // Guardar valor de un registro en la pila
     public void storeVariable(String variable, String register) {
+        if (register == null || !register.startsWith("$")) {
+            System.err.println("Error: Registro inválido para la variable '" + variable + "'.");
+            return;
+        }
         gen("sw " + register + ", " + getVariableAddress(variable));
     }
 
-    public String newFloatTemp() {
-            if (currentTemp <= 9) {
-                return "$f" + currentTemp++;
-            }
-            return "ERROR"; // Si se exceden los registros da error
+    // Guardar valor de un registro flotante en la pila
+    public void storeFloatVariable(String variable, String register) {
+        if (register == null || !register.startsWith("$")) {
+            System.err.println("Error: Registro inválido para la variable '" + variable + "'.");
+            return;
+        }
+        gen("swc1 " + register + ", " + getVariableAddress(variable));  // `swc1` para flotantes
     }
+        // Obtener un registro temporal flotante para operaciones intermedias
+        public String newFloatTemp() {
+            if (currentFloatTemp < 32) { // Máximo de registros flotantes es $f0 - $f31
+                return "$f" + (currentFloatTemp++ % 32);  // Ciclar dentro de los 32 registros flotantes
+            } else {
+                // Manejo de flotantes en la pila
+                frameSize += 4;
+                gen("addi $sp, $sp, -4");  // Reservar espacio en la pila
+                return "-" + frameSize + "($fp)";
+            }
+        }
 
        public void gen(String instruction) {
               System.out.println("Generando instrucción: " + instruction);
@@ -1925,49 +1943,49 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
+            Symbol symbol = (Symbol) CUP$parser$stack.peek();
+            parser.agregarVariable(symbol.left, symbol.right, id.toString(), ((Resultado) t).tipo);
 
-                String tipoVar = ((Resultado) t).tipo;
-                String tipoExpresion = ((Resultado) e).tipo;
-                String tempExpresion = ((Resultado) e).temp;
+            String tipoVar = ((Resultado) t).tipo;
+            String tempExpresion = ((Resultado) e).temp;
 
-                if (tipoVar.equals("cometa")) {
-                    // Usar el identificador del string directamente
-                    String idString = ((Resultado) e).temp;
+            if (tipoVar.equals("cometa")) {
+                // Usar el identificador del string directamente
+                String idString = ((Resultado) e).temp;
 
-                    // Declarar el string (si aún no existe) en .data
-                    parser.declararString(id.toString(), parser.obtenerValorString(idString));
+                // Declarar el string (si aún no existe) en .data
+                parser.declararString(id.toString(), parser.obtenerValorString(idString));
 
-                    // Referenciarlo en .text
-                    parser.gen("la $a0, " + id.toString()); // Cargar la dirección del string
-                    parser.gen("li $v0, 4"); // Syscall para imprimir cadenas
-                    parser.gen("syscall");
-                }else if (tipoVar.equals("bromista")) {
-                    String regFloat = parser.newFloatTemp();  // Obtener un registro flotante
-                    parser.gen("mov.s " + regFloat + ", " + tempExpresion); // Mover el valor a registro flotante
-                    parser.storeVariable(id.toString(), regFloat);  // Guardar en la pila
+                // Referenciarlo en .text
+                parser.gen("la $a0, " + id.toString()); // Cargar la dirección del string
+                parser.gen("li $v0, 4"); // Syscall para imprimir cadenas
+                parser.gen("syscall");
+            } else if (tipoVar.equals("bromista")) {
+                // Si la variable no ha sido asignada, reservar espacio en la pila
+                if (!parser.variableOffset.containsKey(id.toString())) {
+                    parser.allocateVariable(id.toString());
                 }
-                else {
-                    // Si la variable no ha sido asignada, reservar espacio en la pila
-                    if (!parser.variableOffset.containsKey(id.toString())) {
-                        parser.allocateVariable(id.toString());
-                    }
-                    parser.storeVariable(id.toString(), tempExpresion);
-                }
-                // Validación semántica de tipos
-                int line = symbol.left;
-                int column = symbol.right;
 
-                if (!((Resultado) t).tipo.equals(((Resultado) e).tipo)) {
-                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                       ": Tipo incompatible en asignación. Variable '" + id +
-                                       "' es de tipo " + ((Resultado) t).tipo + ", pero se le asignó un valor de tipo " + ((Resultado) e).tipo + ".");
+                // Validar que el temporal correcto se almacene
+                if (tempExpresion != null && tempExpresion.startsWith("$")) {
+                    parser.storeFloatVariable(id.toString(), tempExpresion); // Usar método de flotantes
                 } else {
-                    System.out.println("Asignación válida: '" + id + "' de tipo '" + ((Resultado) t).tipo +
-                                       "' con valor de tipo '" + ((Resultado) e).tipo + "'.");
+                    System.err.println("Error: Registro temporal inválido para la asignación de '" + id + "'.");
                 }
-           
+            } else {
+                // Si la variable no ha sido asignada, reservar espacio en la pila
+                if (!parser.variableOffset.containsKey(id.toString())) {
+                    parser.allocateVariable(id.toString());
+                }
+
+                // Validar que el temporal correcto se almacene
+                if (tempExpresion != null && tempExpresion.startsWith("$")) {
+                    parser.storeVariable(id.toString(), tempExpresion);
+                } else {
+                    System.err.println("Error: Registro temporal inválido para la asignación de '" + id + "'.");
+                }
+            }
+        
               CUP$parser$result = parser.getSymbolFactory().newSymbol("declaracion",5, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
@@ -2053,7 +2071,13 @@ class CUP$parser$actions {
                 if (tipoIdentificador != null) {
                     // Verificar si la variable está en la pila antes de almacenarla
                     if (parser.variableOffset.containsKey(id.toString())) {
-                        parser.storeVariable(id.toString(), ((Resultado) exp).temp);
+                        // Validar que el temporal no sea nulo y esté bien asignado
+                        String temp = ((Resultado) exp).temp;
+                        if (temp != null && temp.startsWith("$")) {
+                            parser.storeVariable(id.toString(), temp);
+                        } else {
+                            System.err.println("Error: Registro temporal inválido para la asignación de '" + id + "'.");
+                        }
                     } else {
                         System.err.println("Error: Variable '" + id + "' no tiene espacio reservado en la pila.");
                     }
@@ -2241,54 +2265,60 @@ class CUP$parser$actions {
                            String temp2 = ((Resultado) e2).temp;
                            String tempResultado;
 
-                           if (esFlotante) {
-                           String tempResultadoF = parser.newFloatTemp();  // Nuevo temporal flotante
-                                switch (((Resultado) op).tipo) {
-                                    case "navidad":
-                                         parser.gen("add.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                                           break;
-                                    case "intercambio":
-                                          parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                                          break;
-                                    case "nochebuena":
-                                          parser.gen("mul.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                                          break;
-                                    case "reyes":
-                                         parser.gen("div.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
-                                          break;
-                                    default:
-                                         System.err.println("Error: Operación flotante no soportada.");
-                             }
-                                 tempResultado = tempResultadoF;
-                          } else {
-                                 tempResultado = parser.newTemp();  // Usar registros $tX
-                                  switch (((Resultado) op).tipo) {
-                                         case "navidad":  parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2); break;
-                                         case "intercambio": parser.gen("sub " + tempResultado + ", " + temp1 + ", " + temp2); break;
-                                         case "nochebuena": parser.gen("mul " + tempResultado + ", " + temp1 + ", " + temp2); break;
-                                         case "reyes":
-                                             parser.gen("div " + temp1 + ", " + temp2);
-                                             parser.gen("mflo " + tempResultado);
-                                             break;
-                                         case "magos":
-                                                parser.gen("div " + temp1 + ", " + temp2);
-                                                parser.gen("mfhi " + tempResultado);
-                                                break;
-                                         default:
-                                             System.err.println("Error: Operación entera no soportada.");
-                                    }
-                                  }
-                                      RESULT = new Resultado(tipoResultado, tempResultado);
-                             }
-                    String tipoResultado = tipo1.equals("bromista") ? "bromista" : "rodolfo";
+                if (esFlotante) {
+                    String tempResultadoF = parser.newFloatTemp();  // Nuevo temporal flotante
 
-                    // Generar un temporal para la operación
-                    String temp1 = ((Resultado) e1).temp;
-                   String temp2 = ((Resultado) e2).temp;
-                   String tempResult = parser.newTemp();
+                    switch (((Resultado) op).tipo) {
+                        case "navidad": // Suma flotante
+                            parser.gen("add.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "intercambio": // Resta flotante
+                            parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "nochebuena": // Multiplicación flotante
+                            parser.gen("mul.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "reyes": // División flotante
+                            parser.gen("div.s " + tempResultadoF + ", " + temp1 + ", " + temp2);
+                            break;
+                        default:
+                            System.err.println("Error: Operación flotante no soportada.");
+                    }
 
-                  // Asignar el resultado con el tipo y el temporal generado
-                  RESULT = new Resultado(tipoResultado, tempResult);
+                    // **Manejar almacenamiento en la pila**
+                    if (!tempResultadoF.startsWith("$")) {
+                        // Si no es un registro flotante válido, usar la pila
+                        parser.storeVariable(tempResultadoF, tempResultadoF);
+                    }
+
+                    tempResultado = tempResultadoF;
+                } else {
+                    tempResultado = parser.newTemp();  // Usar registros $tX para enteros
+                    switch (((Resultado) op).tipo) {
+                        case "navidad":
+                            parser.gen("add " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "intercambio":
+                            parser.gen("sub " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "nochebuena":
+                            parser.gen("mul " + tempResultado + ", " + temp1 + ", " + temp2);
+                            break;
+                        case "reyes":
+                            parser.gen("div " + temp1 + ", " + temp2);
+                            parser.gen("mflo " + tempResultado);
+                            break;
+                        case "magos":
+                            parser.gen("div " + temp1 + ", " + temp2);
+                            parser.gen("mfhi " + tempResultado);
+                            break;
+                        default:
+                            System.err.println("Error: Operación entera no soportada.");
+                    }
+                }
+                    // Asignar el resultado con el tipo y el temporal generado
+                    RESULT = new Resultado(tipoResultado, tempResultado);
+                }
             
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -2421,7 +2451,6 @@ class CUP$parser$actions {
 
                         RESULT = new Resultado("trueno", tempResultado);
                 }
-
           
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-2)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

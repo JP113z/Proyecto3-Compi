@@ -2,11 +2,24 @@ rodolfo _verano_ abreregalo cierraregalo
 abrecuento
 
 rodolfo _x_ finregalo
-rodolfo _x1_ finregalo
+rodolfo _x1_ entrega 6 finregalo
 cometa _string_ finregalo
-rodolfo _x2_ entrega 4 finregalo
+rodolfo _x2_ entrega 4 navidad 11 finregalo
 
-2 navidad 2 finregalo
+bromista _x2_ entrega 7.7 finregalo
+bromista _x12_ entrega 7.7 finregalo
+bromista _x22_ entrega 7.7 finregalo
+bromista _x32_ entrega 7.7 finregalo
+bromista _x42_ entrega 7.7 finregalo
+bromista _x52_ entrega 7.7 finregalo
+bromista _x62_ entrega 7.7 finregalo
+bromista _x72_ entrega 7.7 finregalo
+bromista _x82_ entrega 7.7 finregalo
+bromista _x92_ entrega 7.7 finregalo
+bromista _x112_ entrega 7.7 finregalo
+bromista _x222_ entrega 7.7 finregalo
+
+narra abreregalo _x2_ cierraregalo finregalo
 
 cometa _string2_ entrega "hola" finregalo
 
