@@ -13,6 +13,8 @@ abrecuento
 
     rodolfo _var2_ entrega 20 finregalo
 
+$ IF/ELSE
+
 elfo  abreregalo 6 minstix 8 cierraregalo
 		 abrecuento
 		    narra abreregalo _y_ cierraregalo finregalo
@@ -27,6 +29,8 @@ elfo  abreregalo 6 minstix 8 cierraregalo
 
         cometa _string2_ entrega "while iteracion " finregalo
 
+# WHILE
+
 		 envuelve  abreregalo _x_ minstix 0 cierraregalo
 		 abrecuento
 		    narra abreregalo _string2_ cierraregalo finregalo
@@ -37,6 +41,8 @@ elfo  abreregalo 6 minstix 8 cierraregalo
 
      rodolfo _i_ finregalo
      cometa _string1_ entrega "for iteracion " finregalo
+
+# FOR
 
 	 duende   abreregalo _i_ entrega 2 finregalo _i_ evergreen 10 finregalo _i_ quien  cierraregalo
 		 abrecuento
@@ -52,6 +58,25 @@ elfo  abreregalo 6 minstix 8 cierraregalo
 			narra abreregalo _i2_ cierraregalo finregalo
 			envia finregalo
 		 cierracuento
+
+# SWITCH
+
+    rodolfo _otra_ entrega 3 finregalo
+    cometa _stringSwitch_ entrega "    case 1 " finregalo
+    cometa _stringSwitch1_ entrega "    case 2 " finregalo
+    cometa _stringSwitch2_ entrega "    default " finregalo
+
+	varios  abreregalo 3 navidad 5 intercambio 1 cierraregalo  #semantico
+		abrecuento
+			 historia  1 sigue
+				 narra  abreregalo "    case 1 " cierraregalo  finregalo
+				 corta  finregalo
+			 historia  2 sigue
+					narra abreregalo _stringSwitch1_ cierraregalo finregalo
+					corta  finregalo
+			ultimo  sigue  # error sintactico
+                narra abreregalo _stringSwitch2_ cierraregalo finregalo
+	    cierracuento
 
  envia 1 finregalo
  cierracuento

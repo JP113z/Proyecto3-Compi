@@ -5,6 +5,13 @@ _string_28: .asciiz "for iteracion "
 _string1_: .asciiz "for iteracion "
 _string_38: .asciiz "for iteracion prueba 2 "
 _string3_: .asciiz "for iteracion prueba 2 "
+_string_49: .asciiz "    case 1 "
+_stringSwitch_: .asciiz "    case 1 "
+_string_50: .asciiz "    case 2 "
+_stringSwitch1_: .asciiz "    case 2 "
+_string_51: .asciiz "    default "
+_stringSwitch2_: .asciiz "    default "
+_string_60: .asciiz "    case 1 "
 
 .text
 .globl main
@@ -132,8 +139,44 @@ move $t0, $t6
 sw $t0, -32($fp)
 j _for_start_39
 _for_end_40:
-li $t8, 1
-move $v0, $t8
+li $t8, 3
+addi $sp, $sp, -4
+sw $t8, -36($fp)
+la $a0, _stringSwitch_
+li $v0, 4
+syscall
+la $a0, _stringSwitch1_
+li $v0, 4
+syscall
+la $a0, _stringSwitch2_
+li $v0, 4
+syscall
+li $t2, 3
+li $t3, 5
+li $t4, 1
+sub $t5, $t3, $t4
+add $t6, $t2, $t5
+li $t9, 1
+beq $t6, $t9, _case_0
+j _case_next_0
+_case_0:
+la $a0, _string_60
+li $v0, 4
+syscall
+j _switch_end_57
+_case_next_0:
+li $t1, 2
+beq $t6, $t1, _case_1
+j _case_next_1
+_case_1:
+la $a0, _stringSwitch1_
+li $v0, 4
+syscall
+j _switch_end_57
+_case_next_1:
+_switch_end_57:
+li $t2, 1
+move $v0, $t2
 jr $ra
 
 # Fin del main (_verano_)

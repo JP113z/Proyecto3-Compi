@@ -36,6 +36,10 @@ parser code {:
     public String etiquetaInicioFor;
     public String etiquetaEndFor;
     public String iteradorForActual;
+    public String tempSwitch;
+    public String etiquetaEndSwitch;
+    public String etiquetaDefault;
+    public int caseNumber = 0;
 
     StringBuffer codMIPS = new StringBuffer();
     StringBuffer dataSection = new StringBuffer();
@@ -399,7 +403,7 @@ non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, de
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
 parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read, return_estructura_stmt, if_stmt_aux, if_stmt_cabecera, if_else_stmt,
-for_stmt_cabecera, for_stmt_aux, for_camino;
+for_stmt_cabecera, for_stmt_aux, for_camino, switch_cabecera, switch_cierre;
 
 /* Precedencias */
 precedence right error;
@@ -1378,22 +1382,69 @@ for_stmt_aux ::= expresion:e FIN_EXPRESION
                    parser.gen(parser.etiquetaEndFor + ":");
                :};
 
-switch_stmt ::= SWITCH PARENTESISAPERTURA expresion PARENTESISCIERRE corcheteIzquierdo case_list default_stmt corcheteDerecho
-              | SWITCH PARENTESISAPERTURA expresion PARENTESISCIERRE corcheteIzquierdo case_list corcheteDerecho
-              | SWITCH PARENTESISAPERTURA error PARENTESISCIERRE corcheteIzquierdo case_list corcheteDerecho
-              ;
+switch_stmt ::= switch_cabecera case_list default_stmt switch_cierre
+              | switch_cabecera case_list switch_cierre
+              | SWITCH PARENTESISAPERTURA error PARENTESISCIERRE corcheteIzquierdo case_list corcheteDerecho;
+
+switch_cabecera ::= SWITCH PARENTESISAPERTURA expresion:e PARENTESISCIERRE corcheteIzquierdo
+               {:
+                   // Crear etiqueta global para salir del switch
+                   parser.etiquetaEndSwitch = "_switch_end_" + parser.currentTemp++;
+                   parser.etiquetaDefault = "_default_" + parser.currentTemp++;
+
+                   // Guardar el valor de la expresión del switch
+                   parser.tempSwitch = ((Resultado) e).temp;
+
+                   // Reiniciar contador de cases
+                   parser.caseNumber = 0;
+               :};
+
+switch_cierre ::= corcheteDerecho
+               {:
+                   // Generar la etiqueta de salida del switch
+                   parser.gen(parser.etiquetaEndSwitch + ":");
+               :};
 
 case_list ::= case_list case_stmt
             | case_stmt
             | case_list error case_stmt;
 
-case_stmt ::= CASE expresion DOS_PUNTOS lista_sentencias
-            | CASE error DOS_PUNTOS lista_sentencias
-            ;
+case_stmt ::= CASE expresion:e
+            {:
+                // Crear etiquetas
+                String etiquetaCase = "_case_" + parser.caseNumber;
+                String etiquetaSiguienteCase = "_case_next_" + parser.caseNumber;
+                parser.caseNumber++;
 
-default_stmt ::= DEFAULT DOS_PUNTOS lista_sentencias
-               | DEFAULT error lista_sentencias;
+                // Comparar la expresión del switch con el valor del case
+                parser.gen("beq " + parser.tempSwitch + ", " + ((Resultado) e).temp + ", " + etiquetaCase);
+                parser.gen("j " + etiquetaSiguienteCase);  // Saltar al siguiente case
 
+                // Definir la etiqueta del case
+                parser.gen(etiquetaCase + ":");
+            :}
+            DOS_PUNTOS lista_sentencias
+            {:
+                // Al final de la ejecución del case, saltar al final del switch
+                parser.gen("j " + parser.etiquetaEndSwitch);
+
+                // Solo generar etiqueta _case_next_ si hay más cases después
+                if (parser.caseNumber > 0) {
+                    parser.gen("_case_next_" + (parser.caseNumber - 1) + ":");
+                }
+            :}
+            | CASE error DOS_PUNTOS lista_sentencias;
+
+default_stmt ::= DEFAULT DOS_PUNTOS
+               {:
+                   // Generar la etiqueta para el default solo si no existe aún
+                   if (!parser.etiquetaDefault.equals("_default_")) {
+                       parser.gen(parser.etiquetaDefault + ":");
+                   }
+
+                   // El default no debe hacer un salto al final aquí, ya que ejecuta directamente su código
+               :}
+                 lista_sentencias;
 
 declaracionArreglo ::= tipo:t IDENTIFICADOR:id acceso_arreglo:a
                       {:
