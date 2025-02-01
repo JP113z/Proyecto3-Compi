@@ -21,8 +21,10 @@
  cierracuento
 
  rodolfo _test2_ abreregalo cierraregalo abrecuento
- rodolfo _i3_ finregalo
+
+     rodolfo _i3_ finregalo
      #cometa _mensaje_ entrega "Iteración del for con if" finregalo
+      _test1_ abreregalo cierraregalo finregalo
 
      duende abreregalo _i3_ entrega 0 finregalo _i3_ evergreen 5 finregalo _i3_ quien cierraregalo
          abrecuento
@@ -31,14 +33,16 @@
 
              elfo abreregalo _i3_ minstix 3 cierraregalo
                  abrecuento
-                     narra abreregalo " func 2: El valor de i es menor que 3" cierraregalo finregalo
+                     narra abreregalo " func 2: El valor de i es mayor que 3" cierraregalo finregalo
                  cierracuento
              hada abrecuento
-                 narra abreregalo " func 2: El valor de i es mayor o igual a 3" cierraregalo finregalo
+                 narra abreregalo " func 2: El valor de i es menor o igual a 3" cierraregalo finregalo
              cierracuento
-
              envia finregalo
          cierracuento
+
+        _test1_ abreregalo cierraregalo finregalo
+
  envia 1 finregalo
  cierracuento
 
@@ -170,7 +174,6 @@
                      narra abreregalo _stringSwitch2_ cierraregalo finregalo
      	    cierracuento
 
-     _test1_ abreregalo cierraregalo finregalo
      _test2_ abreregalo cierraregalo finregalo
 
   envia 1 finregalo

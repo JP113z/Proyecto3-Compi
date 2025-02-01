@@ -1221,6 +1221,21 @@ public class parser extends java_cup.runtime.lr_parser {
     public String etiquetaDefault;
     public int caseNumber = 0;
 
+    private int stackOffset = 0;
+
+    public int getCurrentStackOffset() {
+        return stackOffset;
+    }
+
+    public void addToStackOffset(int bytes) {
+        stackOffset += bytes;
+    }
+
+    // Al inicio de cada función, reiniciar el offset
+    public void resetStackOffset() {
+        stackOffset = 0;
+    }
+
     StringBuffer codMIPS = new StringBuffer();
     StringBuffer dataSection = new StringBuffer();
 
@@ -1756,6 +1771,7 @@ class CUP$parser$actions {
                     parser.gen("sw $ra, 4($sp)");    // Guardar $ra en la pila
                     parser.gen("sw $fp, 0($sp)");    // Guardar $fp en la pila
                     parser.gen("move $fp, $sp");    // Actualizar el marco de pila
+                    parser.gen("addi $sp, $sp, -4");
                 
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$0",51, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -1852,6 +1868,7 @@ class CUP$parser$actions {
                        parser.gen("sw $ra, 4($sp)");    // Guardar $ra en la pila
                        parser.gen("sw $fp, 0($sp)");    // Guardar $fp en la pila
                        parser.gen("move $fp, $sp");    // Actualizar el marco de pila
+                       parser.gen("addi $sp, $sp, -4");
                    
               CUP$parser$result = parser.getSymbolFactory().newSymbol("NT$1",52, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
@@ -3798,29 +3815,32 @@ class CUP$parser$actions {
 		int e2right = ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-3)).right;
 		Object e2 = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.elementAt(CUP$parser$top-3)).value;
 		
-                    parser.gen("# Aplicando actualización del for");
+                        parser.gen("# Aplicando actualización del for");
 
-                    if (parser.iteradorForActual != null) {
+                        if (parser.iteradorForActual != null) {
 
-                        String direccionIterador = parser.getVariableAddress(parser.iteradorForActual);
-                        // Cargar el valor actual del iterador desde la pila
-                            parser.gen("lw $t0, " + direccionIterador);
-
-                            // Aplicar la actualización correctamente
                             String tempUpdate = ((Resultado) e2).temp;
 
-                        if (tempUpdate != null) {  // Verificar que tempUpdate no sea nulo
-                            if (tempUpdate.startsWith("addi") || tempUpdate.startsWith("subi")) {
-                                // Si la actualización ya es una instrucción válida, la usamos directamente
-                                parser.gen(tempUpdate.replaceFirst("\\$t\\d+", "$t0"));
-                            } else {
-                                // Si solo es un registro temporal, debemos generar la asignación explícita
-                                parser.gen("move $t0, " + tempUpdate);
-                            }
+                            // Si tempUpdate es $t0, usamos $t1. Si no, dejamos $t0.
+                            String registroCarga = tempUpdate.equals("$t0") ? "$t1" : "$t0";
 
-                            // Guardar el nuevo valor del iterador en la pila
-                            parser.gen("sw $t0, " + direccionIterador);
-                        } else {
+                            String direccionIterador = parser.getVariableAddress(parser.iteradorForActual);
+
+                            // Cargar el valor actual del iterador desde la pila en el registro correcto
+                            parser.gen("lw " + registroCarga + ", " + direccionIterador);
+
+                            if (tempUpdate != null) {  // Verificar que tempUpdate no sea nulo
+                                if (tempUpdate.startsWith("addi") || tempUpdate.startsWith("subi")) {
+                                    // Si la actualización ya es una instrucción válida, la usamos directamente
+                                    parser.gen(tempUpdate.replaceFirst("\\$t\\d+", registroCarga));
+                                } else {
+                                    // Si solo es un registro temporal, debemos generar la asignación explícita
+                                    parser.gen("move " + registroCarga + ", " + tempUpdate);
+                                }
+
+                                // Guardar el nuevo valor del iterador en la pila
+                                parser.gen("sw " + registroCarga + ", " + direccionIterador);
+                            } else {
                             // Obtener línea y columna para el mensaje de error
                             Symbol symbol = (Symbol) CUP$parser$stack.peek();
                             int line = symbol.left;
@@ -4443,21 +4463,55 @@ class CUP$parser$actions {
         String tipoFuncion = parser.getTipo(tablaGlobal, id.toString(), line, column);
 
         if (tipoFuncion.equals("null")) {
-            // Si no se encuentra la función, asignar un RESULT con tipo "null"
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                ": La función '" + id + "' no está declarada en ninguna tabla de símbolos.");
                                errorCount++;
             RESULT = new Resultado("null", null);
         } else {
-            // Generar un temporal para almacenar el resultado de la función (si no es void)
             String tempResultado = null;
-            if (!tipoFuncion.equals("void")) {
-                tempResultado = parser.newTemp();
-                parser.gen("jal " + id);  // Llamada a la función
-                parser.gen("move " + tempResultado + ", $v0");
-            } else {
-                parser.gen("jal " + id);
-            }
+                if (!tipoFuncion.equals("void")) {
+                    tempResultado = parser.newTemp();
+
+                    // Primero guardar el espacio actual del stack
+                    parser.gen("# Guardando registros temporales");
+                    parser.gen("move $s7, $sp");  // Usar $s7 como temporal para guardar $sp actual
+
+                    // Ajustar stack y guardar registros
+                    parser.gen("addi $sp, $sp, -40");  // Espacio exacto para los 10 registros
+                    parser.gen("sw $t0, 36($sp)");
+                    parser.gen("sw $t1, 32($sp)");
+                    parser.gen("sw $t2, 28($sp)");
+                    parser.gen("sw $t3, 24($sp)");
+                    parser.gen("sw $t4, 20($sp)");
+                    parser.gen("sw $t5, 16($sp)");
+                    parser.gen("sw $t6, 12($sp)");
+                    parser.gen("sw $t7, 8($sp)");
+                    parser.gen("sw $t8, 4($sp)");
+                    parser.gen("sw $t9, 0($sp)");
+
+                    // Llamada a función
+                    parser.gen("jal " + id);
+
+                    // Restaurar usando el $sp guardado
+                    parser.gen("# Restaurando registros temporales");
+                    parser.gen("lw $t0, 36($sp)");
+                    parser.gen("lw $t1, 32($sp)");
+                    parser.gen("lw $t2, 28($sp)");
+                    parser.gen("lw $t3, 24($sp)");
+                    parser.gen("lw $t4, 20($sp)");
+                    parser.gen("lw $t5, 16($sp)");
+                    parser.gen("lw $t6, 12($sp)");
+                    parser.gen("lw $t7, 8($sp)");
+                    parser.gen("lw $t8, 4($sp)");
+                    parser.gen("lw $t9, 0($sp)");
+
+                    // Restaurar stack pointer
+                    parser.gen("move $sp, $s7");
+
+                    parser.gen("move " + tempResultado + ", $v0");
+                } else {
+                    parser.gen("jal " + id);
+                }
 
             System.out.println("Invocación válida: " + id + " de tipo: " + tipoFuncion);
             RESULT = new Resultado(tipoFuncion, tempResultado);
@@ -4560,26 +4614,27 @@ class CUP$parser$actions {
                 int line = symbol.left;
                 int column = symbol.right;
 
-                // Obtener el tipo de la función actual usando `currentHash`
                 String tipoFuncion = parser.getTipo(parser.listaTablasSimbolos.get(parser.currentHash), parser.currentHash, line, column);
 
                 if (e == null) {
-                    // Manejo de RETURN sin expresión
                     if (!tipoFuncion.equals("void")) {
                         System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                            ": La función requiere un valor de retorno de tipo '" + tipoFuncion + "', pero se encontró 'void'.");
                                            errorCount++;
                     } else {
                         System.out.println("Retorno válido: void en función de tipo void.");
-                        parser.gen("jr $ra");  // Retornar a la dirección de retorno en MIPS
+                        // Limpiar el stack frame antes de retornar
+                        parser.gen("move $sp, $fp");         // Restaurar stack pointer
+                        parser.gen("lw $ra, 4($sp)");        // Restaurar $ra
+                        parser.gen("lw $fp, 0($sp)");        // Restaurar $fp
+                        parser.gen("addi $sp, $sp, 8");      // Ajustar stack pointer
+                        parser.gen("jr $ra");                // Retornar
                         RESULT = new Resultado("void", null);
                     }
                 } else {
-                    // Manejo de RETURN con expresión
                     Resultado resultadoExpresion = (Resultado) e;
                     String tipoExpresion = resultadoExpresion.tipo;
 
-                    // Comparar los tipos
                     if (!tipoFuncion.equals(tipoExpresion)) {
                         System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
                                            ": Tipo de retorno (" + tipoExpresion + ") no coincide con el tipo de la función (" + tipoFuncion + ").");
@@ -4587,15 +4642,19 @@ class CUP$parser$actions {
                     } else {
                         System.out.println("Retorno válido: tipo '" + tipoExpresion + "'.");
 
-                        // Generar código MIPS para mover el valor de retorno a $v0
                         if (resultadoExpresion.temp != null) {
                             parser.gen("move $v0, " + resultadoExpresion.temp);
+                            // Limpiar el stack frame antes de retornar
+                            parser.gen("move $sp, $fp");     // Restaurar stack pointer
+                            parser.gen("lw $ra, 4($sp)");    // Restaurar $ra
+                            parser.gen("lw $fp, 0($sp)");    // Restaurar $fp
+                            parser.gen("addi $sp, $sp, 8");  // Ajustar stack pointer
+                            parser.gen("jr $ra");            // Retornar
                         } else {
                             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
-                                               ": El temporal para el valor de retorno es null. Asegúrese de que la función retorna un valor válido.");
+                                               ": El temporal para el valor de retorno es null.");
                                                errorCount++;
                         }
-                        parser.gen("jr $ra");  // Retornar a la dirección de retorno en MIPS
                     }
 
                     RESULT = new Resultado(tipoExpresion, resultadoExpresion.temp);
@@ -4609,7 +4668,14 @@ class CUP$parser$actions {
           case 170: // return_stmt ::= RETURN 
             {
               Object RESULT =null;
-
+		
+                // Para return sin expresión
+                parser.gen("move $sp, $fp");     // Restaurar stack pointer
+                parser.gen("lw $ra, 4($sp)");    // Restaurar $ra
+                parser.gen("lw $fp, 0($sp)");    // Restaurar $fp
+                parser.gen("addi $sp, $sp, 8");  // Ajustar stack pointer
+                parser.gen("jr $ra");            // Retornar
+            
               CUP$parser$result = parser.getSymbolFactory().newSymbol("return_stmt",29, ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
           return CUP$parser$result;
