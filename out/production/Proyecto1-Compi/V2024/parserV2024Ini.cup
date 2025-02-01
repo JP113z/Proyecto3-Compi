@@ -520,7 +520,8 @@ bloque ::= corcheteIzquierdo
             parser.bloqueActual++;
         :}
         return_stmt FIN_EXPRESION corcheteDerecho
-        | corcheteIzquierdo error corcheteDerecho;
+        | corcheteIzquierdo error corcheteDerecho
+        |error ;
 
 bloqueEstructura ::= corcheteIzquierdo
                     {:
@@ -532,11 +533,17 @@ bloqueEstructura ::= corcheteIzquierdo
 contenido_estructura_control ::= corcheteDerecho
                              | lista_sentencias corcheteDerecho
                              | lista_sentencias return_estructura_stmt FIN_EXPRESION corcheteDerecho
-                             | return_estructura_stmt FIN_EXPRESION corcheteDerecho;
+                             | return_estructura_stmt FIN_EXPRESION corcheteDerecho
+                             |  return_estructura_stmt error corcheteDerecho
+                             | lista_sentencias return_estructura_stmt error corcheteDerecho;
 
 lista_sentencias ::= lista_sentencias sentencia
                   | sentencia
-                  | error {: System.err.println("Error en una sentencia."); errorCount++; :};
+                  | error {: System.err.println("Error en una sentencia."); errorCount++; :}
+                  |lista_sentencias error {:
+                              System.err.println("Error sintáctico: Falta el fin expresion al final de una sentencia.");
+                              errorCount++;
+                  :};
 
 sentencia ::= declaracion FIN_EXPRESION
             | asignacion FIN_EXPRESION
@@ -546,6 +553,7 @@ sentencia ::= declaracion FIN_EXPRESION
             | print FIN_EXPRESION
             | read FIN_EXPRESION
             | error FIN_EXPRESION
+            | sentencia error
             ;
 print ::= PRINT PARENTESISAPERTURA expresion:e PARENTESISCIERRE
         {:
@@ -706,7 +714,8 @@ declaracion ::= tipo:t IDENTIFICADOR:id
             RESULT = new Resultado(tipoVar, id.toString());
         :}
         | arreglo
-        | tipo error;
+        | tipo error
+        | tipo:t IDENTIFICADOR:id ASIGNA expresion:e error;
 
 tipo ::= INTEGER{: RESULT = new Resultado("rodolfo", null); :}
     | STRING{: RESULT = new Resultado("cometa", null); :}
@@ -751,7 +760,12 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
                 RESULT = new Resultado(tipoIdentificador, id.toString());
             :}
             | IDENTIFICADOR ASIGNA error
-            | error;
+            | error
+            | IDENTIFICADOR:id ASIGNA expresion:exp error
+             {:
+                  System.err.println("Error sintáctico: Falta ';' después de la asignación.");
+                  errorCount++;
+             :};
 
 expresion ::= literal:e {: RESULT = e; :}
             | IDENTIFICADOR:e
@@ -1439,7 +1453,9 @@ for_camino ::= declaracion:e FIN_EXPRESION
 
                    // Generar la etiqueta de inicio del bucle
                    parser.gen(parser.etiquetaInicioFor + ":");
-               :};
+               :}
+               | declaracion error
+               |asignacion error;
 
 for_stmt_aux ::= expresion:e FIN_EXPRESION
                {:
@@ -1499,7 +1515,8 @@ for_stmt_aux ::= expresion:e FIN_EXPRESION
 
                    parser.gen("j " + parser.etiquetaInicioFor);
                    parser.gen(parser.etiquetaEndFor + ":");
-               :};
+               :}
+               | expresion error;
 
 switch_stmt ::= switch_cabecera case_list default_stmt switch_cierre
               | switch_cabecera case_list switch_cierre
