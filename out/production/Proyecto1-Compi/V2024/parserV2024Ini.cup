@@ -887,6 +887,27 @@ expresion ::= literal:e {: RESULT = e; :}
                                  parser.gen("mul.s " + tempMul + ", " + tempTrunc + ", " + temp2);
                                  parser.gen("sub.s " + tempResultadoF + ", " + temp1 + ", " + tempMul);
                                  break;
+                             case "adviento": // Potencia flotante: a^b (solo para exponentes enteros positivos es decir .0)
+                                 String tempCounter = parser.newFloatTemp();
+                                 String tempOne = parser.newFloatTemp();
+                                 String tempMinusOne = parser.newFloatTemp();
+                                 String labelPowLoop = "pow_loop_" + parser.currentTemp++;
+                                 String labelPowEnd = "pow_end_" + parser.currentTemp++;
+                                 parser.gen("li.s " + tempResultadoF + ", 1.0");
+                                 parser.gen("li.s " + tempOne + ", 0.0");
+                                 parser.gen("c.eq.s " + temp2 + ", " + tempOne);
+                                 parser.gen("bc1t " + labelPowEnd);
+                                 parser.gen("mov.s " + tempCounter + ", " + temp2);
+                                 parser.gen("li.s " + tempMinusOne + ", 1.0");
+                                  // Bucle de multiplicación: resultado *= base mientras b > 0
+                                  parser.gen(labelPowLoop + ":");
+                                  parser.gen("mul.s " + tempResultadoF + ", " + tempResultadoF + ", " + temp1);
+                                  parser.gen("sub.s " + tempCounter + ", " + tempCounter + ", " + tempMinusOne); // Decrementar exponente
+                                  parser.gen("c.le.s " + tempCounter + ", " + tempOne); // Verificar si exponente llegó a 0
+                                  parser.gen("bc1t " + labelPowEnd); // Salir si exponente <= 0
+                                  parser.gen("b " + labelPowLoop); // Volver a multiplicar
+                                  parser.gen(labelPowEnd + ":");
+                                  break;
                             default:
                                 System.err.println("Error: Operación flotante no soportada.");
                         }

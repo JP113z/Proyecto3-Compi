@@ -9,11 +9,11 @@ abrecuento
 
 #15.445  evergreen 1.234 finregalo
 
-bromista _float_ entrega  baltazar 0.0 finregalo
+bromista _float_ entrega  5.0 adviento 2.0 finregalo
 
 narra abreregalo _float_ cierraregalo finregalo
 
-rodolfo _int_ entrega  baltazar 10 finregalo
+#rodolfo _int_ entrega  baltazar 10 finregalo
 
 #narra abreregalo _int_ cierraregalo finregalo
 
