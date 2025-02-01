@@ -29,6 +29,13 @@ elfo  abreregalo 6 minstix 8 cierraregalo
 
         cometa _string2_ entrega "while iteracion " finregalo
 
+elfo  abreregalo 6 snowball 8 cierraregalo
+		 abrecuento
+		    narra abreregalo "  Segundo If  " cierraregalo finregalo
+			rodolfo _var_ entrega 8 finregalo
+			 envia finregalo
+		 cierracuento
+
 # WHILE
 
 		 envuelve  abreregalo _x_ minstix 0 cierraregalo
@@ -39,10 +46,20 @@ elfo  abreregalo 6 minstix 8 cierraregalo
 			envia finregalo
 		 cierracuento
 
-     rodolfo _i_ finregalo
-     cometa _string1_ entrega "for iteracion " finregalo
+        rodolfo _while2_ entrega 3 finregalo
+
+		 envuelve  abreregalo _x_ minstix 0 cierraregalo
+		 abrecuento
+		    narra abreregalo "  while 2  " cierraregalo finregalo
+			narra abreregalo _while2_ cierraregalo finregalo
+			_while2_ entrega _while2_ grinch finregalo
+			envia finregalo
+		 cierracuento
 
 # FOR
+
+     rodolfo _i_ finregalo
+     cometa _string1_ entrega "for iteracion " finregalo
 
 	 duende   abreregalo _i_ entrega 2 finregalo _i_ evergreen 10 finregalo _i_ quien  cierraregalo
 		 abrecuento
@@ -105,15 +122,15 @@ elfo  abreregalo 6 minstix 8 cierraregalo
  cierracuento
 
  rodolfo _test2_ abreregalo cierraregalo abrecuento
- rodolfo _i_ finregalo
+ rodolfo _i3_ finregalo
      #cometa _mensaje_ entrega "Iteración del for con if" finregalo
 
-     duende abreregalo _i_ entrega 0 finregalo _i_ evergreen 5 finregalo _i_ quien cierraregalo
+     duende abreregalo _i3_ entrega 0 finregalo _i3_ evergreen 5 finregalo _i3_ quien cierraregalo
          abrecuento
              #narra abreregalo _mensaje_ cierraregalo finregalo
-             narra abreregalo _i_ cierraregalo finregalo
+             narra abreregalo _i3_ cierraregalo finregalo
 
-             elfo abreregalo _i_ minstix 3 cierraregalo
+             elfo abreregalo _i3_ minstix 3 cierraregalo
                  abrecuento
                      narra abreregalo "El valor de i es menor que 3" cierraregalo finregalo
                  cierracuento

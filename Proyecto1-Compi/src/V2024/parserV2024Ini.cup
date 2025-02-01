@@ -527,7 +527,7 @@ bloqueEstructura ::= corcheteIzquierdo
                         parser.bloqueActual++;
                     :}
                     contenido_estructura_control
-                  | corcheteIzquierdo error corcheteDerecho;
+                  | corcheteIzquierdo error corcheteDerecho error;
 
 contenido_estructura_control ::= corcheteDerecho
                              | lista_sentencias corcheteDerecho
@@ -660,7 +660,7 @@ declaracion ::= tipo:t IDENTIFICADOR:id
             int column = symbol.right;
 
             String tipoVar = ((Resultado) t).tipo;
-            String tempExpresion = ((Resultado) e).temp;
+            String tempExpresion = (e == null) ? null : ((Resultado) e).temp;
 
             if (tipoVar.equals("cometa")) {
                 // Usar el identificador del string directamente
@@ -1433,11 +1433,13 @@ for_stmt_aux ::= expresion:e FIN_EXPRESION
                     parser.gen("# Aplicando actualización del for");
 
                     if (parser.iteradorForActual != null) {
-                        // Cargar el valor actual del iterador desde la pila
-                        parser.gen("lw $t0, " + parser.iteradorForActual);
 
-                        // Aplicar la actualización correctamente
-                        String tempUpdate = ((Resultado) e2).temp;
+                        String direccionIterador = parser.getVariableAddress(parser.iteradorForActual);
+                        // Cargar el valor actual del iterador desde la pila
+                            parser.gen("lw $t0, " + direccionIterador);
+
+                            // Aplicar la actualización correctamente
+                            String tempUpdate = ((Resultado) e2).temp;
 
                         if (tempUpdate != null) {  // Verificar que tempUpdate no sea nulo
                             if (tempUpdate.startsWith("addi") || tempUpdate.startsWith("subi")) {
@@ -1449,7 +1451,7 @@ for_stmt_aux ::= expresion:e FIN_EXPRESION
                             }
 
                             // Guardar el nuevo valor del iterador en la pila
-                            parser.gen("sw $t0, " + parser.iteradorForActual);
+                            parser.gen("sw $t0, " + direccionIterador);
                         } else {
                             // Obtener línea y columna para el mensaje de error
                             Symbol symbol = (Symbol) CUP$parser$stack.peek();

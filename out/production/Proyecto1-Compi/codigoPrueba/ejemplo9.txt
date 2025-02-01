@@ -48,4 +48,4 @@ _/
 	 trueno  _bl0_  entrega  6.7  openslae  8.9 finregalo  #ok
 	# trueno  _bl1_  entrega  _in1_  upatree  _fl1_  gaspar  false  melchor   baltazar  abreregalo _func2_ abreregalo 3 , _in1_ cierraregalo   minstix  56 cierraregalo  finregalo  #semantico in1  upatree  fl1 ,  func2
 	 envia 10 finregalo  #semantico
-  cierracuento 
+  cierracuento
