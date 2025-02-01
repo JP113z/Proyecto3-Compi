@@ -9,7 +9,7 @@ abrecuento
 
 #15.445  evergreen 1.234 finregalo
 
-rodolfo _float_ entrega  10 magos 3 finregalo
+bromista _float_ entrega  10.4 evergreen 3.5 finregalo
 
 narra abreregalo _float_ cierraregalo finregalo
 

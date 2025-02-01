@@ -984,35 +984,50 @@ expresion ::= literal:e {: RESULT = e; :}
                                           String tempResultado = parser.newTemp(); // Para almacenar el resultado booleano (1 o 0)
 
                               if (esFlotante) {
-                                        // Nuevo temporal flotante
-                                        String tempResultadoF = parser.newFloatTemp();
-                              switch (operador) {
-                              case "snowball": //Menor que
+                                  String tempResultadoF = parser.newFloatTemp(); // Crear un nuevo registro flotante
+                                  String labelTrue = "label_true_";
+                                  String labelEnd = "label_end_";
+                                  switch (operador) {
+                                      case "snowball": // Menor que
                                           parser.gen("c.lt.s " + temp1 + ", " + temp2);
                                           break;
-                              case "evergreen": // Menor o igual
+                                      case "evergreen": // Menor o igual
                                           parser.gen("c.le.s " + temp1 + ", " + temp2);
                                           break;
-                              case "minstix": // Mayor que
-                                           parser.gen("c.lt.s " + temp1 + ", " + temp2);
-                                           break;
-                              case "upatree": // Mayor o igual
-                                          parser.gen("c.le.s " + temp1 + ", " + temp2);
+                                      case "minstix": // Mayor que
+                                          parser.gen("c.lt.s " + temp2 + ", " + temp1);
                                           break;
-                             case "mary": // Igualdad
-                                         parser.gen("c.eq.s " + temp1 + ", " + temp2);
-                                         break;
-                              case "openslae": // Diferente
-                                       parser.gen("c.eq.s " + temp1 + ", " + temp2);
-                                       parser.gen("li " + tempResultado + ", 0");  // Inicializar en 0
-                                       parser.gen("bc1f _falseLabel"); // Si es falso, saltar
-                                       parser.gen("li " + tempResultado + ", 1");  // Si es cierto, asignar 1
-                                       parser.gen("_falseLabel:");
-                                    break;
-                                default:
-                                        System.err.println("Error: Operador relacional no soportado.");
-                               }
-                              } else {
+                                      case "upatree": // Mayor o igual
+                                          parser.gen("c.le.s " + temp2 + ", " + temp1);
+                                          break;
+                                      case "mary": // Igualdad
+                                          parser.gen("c.eq.s " + temp1 + ", " + temp2);
+                                          break;
+                                      case "openslae": // Diferente
+                                          parser.gen("c.eq.s " + temp1 + ", " + temp2);
+                                          parser.gen("bc1t " + labelTrue);
+                                          parser.gen("li.s $f0, 1.0"); // Son diferentes, asignar 1.0
+                                          parser.gen("mov.s " + tempResultadoF + ", $f0");
+                                          parser.gen("b " + labelEnd);
+                                          parser.gen(labelTrue + ":");
+                                          parser.gen("li.s $f0, 0.0"); // Son iguales, asignar 0.0
+                                          parser.gen("mov.s " + tempResultadoF + ", $f0");
+                                          parser.gen(labelEnd + ":");
+                                          break;
+                                      default:
+                                          System.err.println("Error: Operador relacional no soportado.");
+                                  }
+                                  if (!operador.equals("openslae")) {
+                                      parser.gen("li.s $f0, 0.0"); // Inicializar en 0.0
+                                      parser.gen("mov.s " + tempResultadoF + ", $f0");
+                                      parser.gen("bc1f " + labelTrue); // Si la comparación es falsa, saltar
+                                      parser.gen("li.s $f0, 1.0"); // Si es verdadera, asignar 1.0
+                                      parser.gen("mov.s " + tempResultadoF + ", $f0");
+                                      parser.gen(labelTrue + ":");
+                                  }
+                                  tempResultado = tempResultadoF;
+                              }
+                         else {
                               // Generación de código MIPS para comparaciones de enteros
                              switch (operador) {
                              case "snowball": // Menor que
