@@ -33,6 +33,9 @@ parser code {:
     public String etiquetaEndElse;
     public String etiquetaInicioWhile;
     public String etiquetaEndWhile;
+    public String etiquetaInicioFor;
+    public String etiquetaEndFor;
+    public String iteradorForActual;
 
     StringBuffer codMIPS = new StringBuffer();
     StringBuffer dataSection = new StringBuffer();
@@ -395,7 +398,8 @@ DOS_PUNTOS, PRINT, READ,SUMA, RESTA, DIVISION, MULTIPLICACION, MODULO, POTENCIA;
 non terminal programa, declaracion_main, bloque, lista_sentencias, sentencia, declaracion, asignacion, expresion, tipo, literal, operador_binario,
 operador_unario, operador_logico, operador_relacional, estructura_control, if_stmt, while_stmt, for_stmt, switch_stmt,  case_list, case_stmt, default_stmt,
 lista_expresiones,  arreglo, acceso_arreglo, llamada_funcion, declaracion_funcion, parametros, lista_parametros, return_stmt, funcion, lista_funciones, declaracionArreglo, parametrosArreglos,
-parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read, return_estructura_stmt, if_stmt_aux, if_stmt_cabecera, if_else_stmt;
+parametrosArreglosAux, bloqueEstructura, cabecera_main, cabecera_funcion, contenido_estructura_control, llamada_funcion_aux, print, read, return_estructura_stmt, if_stmt_aux, if_stmt_cabecera, if_else_stmt,
+for_stmt_cabecera, for_stmt_aux, for_camino;
 
 /* Precedencias */
 precedence right error;
@@ -627,6 +631,7 @@ declaracion ::= tipo:t IDENTIFICADOR:id
                     parser.gen("li " + temp + ", 0");  // Inicializar en 0
                     parser.storeVariable(id.toString(), temp);  // Guardar en la pila
                 }
+                RESULT = new Resultado(tipoVar, id.toString());
             :}
           | tipo:t IDENTIFICADOR:id ASIGNA expresion:e
         {:
@@ -672,6 +677,7 @@ declaracion ::= tipo:t IDENTIFICADOR:id
                     System.err.println("Error: Registro temporal inválido para la asignación de '" + id + "'.");
                 }
             }
+            RESULT = new Resultado(tipoVar, id.toString());
         :}
         | arreglo
         | tipo error;
@@ -689,10 +695,13 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
                     parser.listaTablasSimbolos.get(parser.currentHash), id.toString(), symbol.left, symbol.right);
 
                 if (tipoIdentificador != null) {
-                    // Verificar si la variable está en la pila antes de almacenarla
-                    if (parser.variableOffset.containsKey(id.toString())) {
-                        // Validar que el temporal no sea nulo y esté bien asignado
-                        String temp = ((Resultado) exp).temp;
+                    String temp = ((Resultado) exp).temp;
+
+                    if (tipoIdentificador.equals("cometa")) {
+                        // Si es un string, almacenar directamente en .data
+                        parser.declararString(id.toString(), parser.obtenerValorString(temp));
+                    } else if (parser.variableOffset.containsKey(id.toString())) {
+                        // Si es una variable en la pila, almacenarla
                         if (temp != null && temp.startsWith("$")) {
                             parser.storeVariable(id.toString(), temp);
                         } else {
@@ -702,6 +711,7 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
                         System.err.println("Error: Variable '" + id + "' no tiene espacio reservado en la pila.");
                     }
                 }
+                RESULT = new Resultado(tipoIdentificador, id.toString());
             :}
             | IDENTIFICADOR ASIGNA error
             | error;
@@ -714,7 +724,11 @@ expresion ::= literal:e {: RESULT = e; :}
                                                e.toString(), symbol.left, symbol.right);
 
                  if (tipo != null) {
-                     if (parser.variableOffset.containsKey(e.toString())) {
+                     if (tipo.equals("cometa")) {
+                         System.out.println("[DEBUG] Cargando string desde .data");
+                         String temp = e.toString(); // La variable es una etiqueta en .data
+                         RESULT = new Resultado(tipo, temp);
+                     } else if (parser.variableOffset.containsKey(e.toString())) {
                           System.out.println("[DEBUG] Variable '" + e + "' encontrada en la pila.");
 
                           String temp;
@@ -1284,10 +1298,82 @@ while_stmt ::= WHILE PARENTESISAPERTURA
                :}
              | WHILE PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura;
 
+for_stmt ::= for_stmt_cabecera for_camino for_stmt_aux;
 
-for_stmt ::= FOR PARENTESISAPERTURA declaracion FIN_EXPRESION expresion FIN_EXPRESION expresion PARENTESISCIERRE bloqueEstructura
-           | FOR PARENTESISAPERTURA asignacion FIN_EXPRESION expresion FIN_EXPRESION expresion PARENTESISCIERRE bloqueEstructura
-           | FOR PARENTESISAPERTURA error PARENTESISCIERRE bloqueEstructura;
+for_stmt_cabecera ::= FOR PARENTESISAPERTURA
+               {:
+                   // Generar etiquetas para el inicio y fin del bucle
+                   parser.etiquetaInicioFor = "_for_start_" + parser.currentTemp++;
+                   parser.etiquetaEndFor = "_for_end_" + parser.currentTemp++;
+               :};
+
+
+for_camino ::= declaracion:e FIN_EXPRESION
+               {:
+                   // Guardar el nombre de la variable del iterador
+                   parser.iteradorForActual = ((Resultado) e).temp;
+
+                   // Generar la etiqueta de inicio del bucle
+                   parser.gen(parser.etiquetaInicioFor + ":");
+               :}
+               |
+               asignacion:e FIN_EXPRESION
+               {:
+                   // Guardar el nombre de la variable del iterador
+                   parser.iteradorForActual = ((Resultado) e).temp;
+
+                   // Generar la etiqueta de inicio del bucle
+                   parser.gen(parser.etiquetaInicioFor + ":");
+               :};
+
+for_stmt_aux ::= expresion:e FIN_EXPRESION
+               {:
+                   if (e == null) {
+                       Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                       int line = symbol.left;
+                       int column = symbol.right;
+                       System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                          ": Se ha intentado utilizar una expresión con valor nulo en el for.");
+                       errorCount++;
+                   } else {
+                       // Evaluar la condición del bucle
+                       parser.gen("beq " + ((Resultado) e).temp + ", $zero, " + parser.etiquetaEndFor);
+                   }
+               :}
+               expresion:e2 PARENTESISCIERRE
+               {:
+                   // Se ejecutará después de `bloqueEstructura`
+               :}
+               bloqueEstructura
+               {:
+                    parser.gen("# Aplicando actualización del for");
+
+                    if (parser.iteradorForActual != null) {
+                        String direccionIterador = parser.getVariableAddress(parser.iteradorForActual);
+
+                        if (direccionIterador != null) {
+                            // Cargar el valor actual del iterador desde la pila
+                            parser.gen("lw $t0, " + direccionIterador);
+
+                            // Aplicar la actualización correctamente
+                            String tempUpdate = ((Resultado) e2).temp;
+
+                            if (tempUpdate.startsWith("addi") || tempUpdate.startsWith("subi")) {
+                                // Si la actualización ya es una instrucción válida, la usamos directamente
+                                parser.gen(tempUpdate.replaceFirst("\\$t\\d+", "$t0"));
+                            } else {
+                                // Si solo es un registro temporal, debemos generar la asignación explícita
+                                parser.gen("move $t0, " + tempUpdate);
+                            }
+
+                            // Guardar el nuevo valor del iterador en la pila
+                            parser.gen("sw $t0, " + direccionIterador);
+                        }
+                    }
+
+                   parser.gen("j " + parser.etiquetaInicioFor);
+                   parser.gen(parser.etiquetaEndFor + ":");
+               :};
 
 switch_stmt ::= SWITCH PARENTESISAPERTURA expresion PARENTESISCIERRE corcheteIzquierdo case_list default_stmt corcheteDerecho
               | SWITCH PARENTESISAPERTURA expresion PARENTESISCIERRE corcheteIzquierdo case_list corcheteDerecho

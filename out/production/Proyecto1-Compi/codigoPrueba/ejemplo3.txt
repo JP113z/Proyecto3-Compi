@@ -25,10 +25,31 @@ elfo  abreregalo 6 minstix 8 cierraregalo
 			 envia finregalo
 	 cierracuento
 
+        cometa _string2_ entrega "while iteracion " finregalo
+
 		 envuelve  abreregalo _x_ minstix 0 cierraregalo
 		 abrecuento
+		    narra abreregalo _string2_ cierraregalo finregalo
 			narra abreregalo _x_ cierraregalo finregalo
 			_x_ entrega _x_ grinch finregalo
+			envia finregalo
+		 cierracuento
+
+     rodolfo _i_ finregalo
+     cometa _string1_ entrega "for iteracion " finregalo
+
+	 duende   abreregalo _i_ entrega 2 finregalo _i_ evergreen 10 finregalo _i_ quien  cierraregalo
+		 abrecuento
+		    narra abreregalo _string1_ cierraregalo finregalo
+			narra abreregalo _i_ cierraregalo finregalo
+			envia finregalo
+		 cierracuento
+
+     cometa _string3_ entrega "for iteracion prueba 2 " finregalo
+	 duende   abreregalo rodolfo _i2_ entrega 10 finregalo _i2_ upatree 1 finregalo _i2_ grinch  cierraregalo
+		 abrecuento
+		    narra abreregalo _string3_ cierraregalo finregalo
+			narra abreregalo _i2_ cierraregalo finregalo
 			envia finregalo
 		 cierracuento
 
