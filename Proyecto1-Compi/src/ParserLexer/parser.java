@@ -1867,6 +1867,9 @@ class CUP$parser$actions {
                         }
                     }
                     parser.gen("syscall");
+                    parser.gen("li $a0, 10");  // Código ASCII de '\n'
+                    parser.gen("li $v0, 11");
+                    parser.gen("syscall");
                 }
             }
 
@@ -1986,7 +1989,7 @@ class CUP$parser$actions {
                 // Referenciarlo en .text
                 parser.gen("la $a0, " + id.toString()); // Cargar la dirección del string
                 parser.gen("li $v0, 4"); // Syscall para imprimir cadenas
-                parser.gen("syscall");
+                //parser.gen("syscall");
             } else if (tipoVar.equals("bromista")) {
                 // Si la variable no ha sido asignada, reservar espacio en la pila
                 if (!parser.variableOffset.containsKey(id.toString())) {

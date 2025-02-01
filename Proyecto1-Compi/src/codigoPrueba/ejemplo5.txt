@@ -13,9 +13,9 @@ bromista _float_ entrega  5.0 adviento 2.0 finregalo
 
 narra abreregalo _float_ cierraregalo finregalo
 
-#rodolfo _int_ entrega  baltazar 10 finregalo
+rodolfo _int_ entrega  10 finregalo
 
-#narra abreregalo _int_ cierraregalo finregalo
+narra abreregalo _int_ cierraregalo finregalo
 
 #bromista _float_ entrega  10.4 evergreen 3.5 finregalo
 
@@ -28,15 +28,15 @@ narra abreregalo _float_ cierraregalo finregalo
 #rodolfo _intva_ entrega 10 navidad 15 finregalo
 
 
-#cometa _string2_ entrega "esto es un print" finregalo
+cometa _string2_ entrega "esto es un print" finregalo
 
 #narra abreregalo _intva_ cierraregalo finregalo
 
-#narra abreregalo "hola mundo" cierraregalo finregalo
+narra abreregalo "hola mundo" cierraregalo finregalo
 
-#narra abreregalo 'd' cierraregalo finregalo
+narra abreregalo 'd' cierraregalo finregalo
 
-#narra abreregalo 10.345 cierraregalo finregalo
+narra abreregalo 10.345 cierraregalo finregalo
 
 #narra abreregalo 100 cierraregalo finregalo
 
