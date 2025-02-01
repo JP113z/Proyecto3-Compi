@@ -696,11 +696,19 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
             {:
                 Symbol symbol = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
                 String tipoIdentificador = parser.getTipo(
-                    parser.listaTablasSimbolos.get(parser.currentHash), id.toString(), symbol.left, symbol.right);
+                parser.listaTablasSimbolos.get(parser.currentHash), id.toString(), symbol.left, symbol.right);
+                int line = symbol.left;
+                int column = symbol.right;
+                String temp;
 
                 if (tipoIdentificador != null) {
-                    String temp = ((Resultado) exp).temp;
-
+                        if (exp == null) {
+                            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                               ": Se ha intentado asignar un valor nulo a la variable '" + id + "'.");
+                            temp = null;
+                        } else {
+                             temp = ((Resultado) exp).temp;
+                        }
                     if (tipoIdentificador.equals("cometa")) {
                         // Si es un string, almacenar directamente en .data
                         parser.declararString(id.toString(), parser.obtenerValorString(temp));
@@ -709,10 +717,10 @@ asignacion ::= IDENTIFICADOR:id ASIGNA expresion:exp
                         if (temp != null && temp.startsWith("$")) {
                             parser.storeVariable(id.toString(), temp);
                         } else {
-                            System.err.println("Error: Registro temporal inválido para la asignación de '" + id + "'.");
+                            System.err.println("Error interno: Registro temporal inválido para la asignación de '" + id + "'.");
                         }
                     } else {
-                        System.err.println("Error: Variable '" + id + "' no tiene espacio reservado en la pila.");
+                        System.err.println("Error interno: Variable '" + id + "' no tiene espacio reservado en la pila.");
                     }
                 }
                 RESULT = new Resultado(tipoIdentificador, id.toString());
@@ -1377,15 +1385,13 @@ for_stmt_aux ::= expresion:e FIN_EXPRESION
                     parser.gen("# Aplicando actualización del for");
 
                     if (parser.iteradorForActual != null) {
-                        String direccionIterador = parser.getVariableAddress(parser.iteradorForActual);
+                        // Cargar el valor actual del iterador desde la pila
+                        parser.gen("lw $t0, " + parser.iteradorForActual);
 
-                        if (direccionIterador != null) {
-                            // Cargar el valor actual del iterador desde la pila
-                            parser.gen("lw $t0, " + direccionIterador);
+                        // Aplicar la actualización correctamente
+                        String tempUpdate = ((Resultado) e2).temp;
 
-                            // Aplicar la actualización correctamente
-                            String tempUpdate = ((Resultado) e2).temp;
-
+                        if (tempUpdate != null) {  // Verificar que tempUpdate no sea nulo
                             if (tempUpdate.startsWith("addi") || tempUpdate.startsWith("subi")) {
                                 // Si la actualización ya es una instrucción válida, la usamos directamente
                                 parser.gen(tempUpdate.replaceFirst("\\$t\\d+", "$t0"));
@@ -1395,9 +1401,19 @@ for_stmt_aux ::= expresion:e FIN_EXPRESION
                             }
 
                             // Guardar el nuevo valor del iterador en la pila
-                            parser.gen("sw $t0, " + direccionIterador);
+                            parser.gen("sw $t0, " + parser.iteradorForActual);
+                        } else {
+                            // Obtener línea y columna para el mensaje de error
+                            Symbol symbol = (Symbol) CUP$parser$stack.peek();
+                            int line = symbol.left;
+                            int column = symbol.right;
+
+                            // Lanzar error semántico si tempUpdate es nulo
+                            System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                               ": Expresión de actualización inválida en el for.");
                         }
                     }
+
 
                    parser.gen("j " + parser.etiquetaInicioFor);
                    parser.gen(parser.etiquetaEndFor + ":");
