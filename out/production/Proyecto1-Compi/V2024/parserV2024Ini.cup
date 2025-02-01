@@ -1224,7 +1224,35 @@ expresion ::= literal:e {: RESULT = e; :}
                  RESULT = new Resultado(tipo, tempResultado);
          :}
          | PARENTESISAPERTURA expresion:e PARENTESISCIERRE {: RESULT = e; :}
-         | PARENTESISAPERTURA error PARENTESISCIERRE;
+         | PARENTESISAPERTURA error PARENTESISCIERRE
+         | operador_relacional error {:
+          Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+          Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+          int line1 = symbol1.left;
+          int column1 = symbol1.right;
+          int line2 = symbol2.left;
+          int column2 = symbol2.right;
+          System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                                                  ": No pueden haber dos operandos seguidos.");:}
+          | operador_binario error {:
+                     Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                     Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                     int line1 = symbol1.left;
+                     int column1 = symbol1.right;
+                     int line2 = symbol2.left;
+                     int column2 = symbol2.right;
+                     System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                                                                 ": No pueden haber dos operandos seguidos.");:}
+          | operador_logico error {:
+                                 Symbol symbol1 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 3);
+                                 Symbol symbol2 = (Symbol) CUP$parser$stack.elementAt(CUP$parser$stack.size() - 1);
+                                 int line1 = symbol1.left;
+                                 int column1 = symbol1.right;
+                                 int line2 = symbol2.left;
+                                 int column2 = symbol2.right;
+                                 System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
+                                                                                                             ": No pueden haber dos operandos seguidos.");:}
+          ;
 
 literal ::= L_INTEGER:i
     {:
