@@ -997,7 +997,7 @@ expresion ::= literal:e {: RESULT = e; :}
                                  parser.gen("move " + tempResultado + ", " + tempResultado);
                                  break;
                             default:
-                                System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                                    ": Operación flotante no soportada.");
                                                    errorCount++;
 
@@ -1054,7 +1054,7 @@ expresion ::= literal:e {: RESULT = e; :}
                                     case "openslae": // Diferente
                                         parser.gen("sne " + tempResultado + ", " + temp1 + ", " + temp2);
                                     default:
-                                        System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                        System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                                            ": Operador relacional no soportado.");
                                                            errorCount++;
 
@@ -1103,7 +1103,7 @@ expresion ::= literal:e {: RESULT = e; :}
                                           parser.gen(labelEnd + ":");
                                           break;
                                       default:
-                                          System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                          System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                                              ": Operador relacional no soportado.");
                                                              errorCount++;
                                   }
@@ -1139,7 +1139,7 @@ expresion ::= literal:e {: RESULT = e; :}
                                     parser.gen("sne " + tempResultado + ", " + temp1 + ", " + temp2);
                                     break;
                               default:
-                                    System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                    System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                                        ": Operador relacional no soportado.");
                                                        errorCount++;
                           }
@@ -1189,7 +1189,7 @@ expresion ::= literal:e {: RESULT = e; :}
                                    parser.gen("or " + tempResultado + ", " + temp1 + ", " + temp2);
                                    break;
                                default:
-                                   System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
+                                   System.err.println("Error semántico en línea " + (line1 + 1) + ", columna " + (column1 + 1) +
                                                        ": Operador logico no soportado.");
                                                        errorCount++;
                            }
