@@ -1,10 +1,30 @@
+ rodolfo _verano_ abreregalo cierraregalo
 
-rodolfo _verano_  abreregalo cierraregalo
-abrecuento
+ abrecuento
 
-rodolfo _arr_ abreempaque 10 cierraempaque entrega abrecuento 10 , 5 cierracuento finregalo
+     rodolfo _contador_ entrega 1 finregalo
+    # cometa _mensajeForSwitch_ entrega "Probando switch dentro de for" finregalo
 
-_arr2_ abreempaque 10 cierraempaque finregalo
+     duende abreregalo _contador_ entrega 1 finregalo _contador_ evergreen 3 finregalo _contador_ quien cierraregalo
+         abrecuento
+             #narra abreregalo _mensajeForSwitch_ cierraregalo finregalo
+             narra abreregalo _contador_ cierraregalo finregalo
 
-envia 3 finregalo
-cierracuento
+             varios abreregalo _contador_ cierraregalo
+                 abrecuento
+                     historia 1 sigue
+                         narra abreregalo "Caso 1 ejecutado" cierraregalo finregalo
+                         corta finregalo
+                     historia 2 sigue
+                         narra abreregalo "Caso 2 ejecutado" cierraregalo finregalo
+                         corta finregalo
+                     ultimo sigue
+                         narra abreregalo "Caso default ejecutado" cierraregalo finregalo
+                 cierracuento
+
+             envia finregalo
+         cierracuento
+
+
+ envia 1 finregalo
+ cierracuento

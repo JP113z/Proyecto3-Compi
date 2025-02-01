@@ -13,7 +13,7 @@ abrecuento
 
     rodolfo _var2_ entrega 20 finregalo
 
-$ IF/ELSE
+# IF/ELSE
 
 elfo  abreregalo 6 minstix 8 cierraregalo
 		 abrecuento
@@ -80,3 +80,49 @@ elfo  abreregalo 6 minstix 8 cierraregalo
 
  envia 1 finregalo
  cierracuento
+
+ rodolfo _test1_ abreregalo cierraregalo abrecuento
+
+     rodolfo _valor_ entrega 7 finregalo
+     cometa _mensajeWhile_ entrega "Iteración en while dentro de if" finregalo
+
+     elfo abreregalo _valor_ evergreen 10 cierraregalo
+         abrecuento
+             envuelve abreregalo _valor_ minstix 0 cierraregalo
+             abrecuento
+                 narra abreregalo _mensajeWhile_ cierraregalo finregalo
+                 narra abreregalo _valor_ cierraregalo finregalo
+                 _valor_ entrega _valor_ grinch finregalo
+                 envia finregalo
+             cierracuento
+         cierracuento
+     hada abrecuento
+         narra abreregalo "El valor es mayor o igual a 10, no entra al while" cierraregalo finregalo
+     cierracuento
+
+
+ envia 1 finregalo
+ cierracuento
+
+ rodolfo _test2_ abreregalo cierraregalo abrecuento
+ rodolfo _i_ finregalo
+     #cometa _mensaje_ entrega "Iteración del for con if" finregalo
+
+     duende abreregalo _i_ entrega 0 finregalo _i_ evergreen 5 finregalo _i_ quien cierraregalo
+         abrecuento
+             #narra abreregalo _mensaje_ cierraregalo finregalo
+             narra abreregalo _i_ cierraregalo finregalo
+
+             elfo abreregalo _i_ minstix 3 cierraregalo
+                 abrecuento
+                     narra abreregalo "El valor de i es menor que 3" cierraregalo finregalo
+                 cierracuento
+             hada abrecuento
+                 narra abreregalo "El valor de i es mayor o igual a 3" cierraregalo finregalo
+             cierracuento
+
+             envia finregalo
+         cierracuento
+ envia 1 finregalo
+ cierracuento
+
