@@ -9,9 +9,17 @@ abrecuento
 
 #15.445  evergreen 1.234 finregalo
 
-bromista _float_ entrega  10.4 evergreen 3.5 finregalo
+bromista _float_ entrega  baltazar 0.0 finregalo
 
 narra abreregalo _float_ cierraregalo finregalo
+
+rodolfo _int_ entrega  baltazar 10 finregalo
+
+#narra abreregalo _int_ cierraregalo finregalo
+
+#bromista _float_ entrega  10.4 evergreen 3.5 finregalo
+
+#narra abreregalo _float_ cierraregalo finregalo
 
 #3.445 navidad 1.234 finregalo
 

@@ -2617,22 +2617,25 @@ class CUP$parser$actions {
 		int eright = ((java_cup.runtime.Symbol)CUP$parser$stack.peek()).right;
 		Object e = (Object)((java_cup.runtime.Symbol) CUP$parser$stack.peek()).value;
 		
-                   Symbol symbol = (Symbol) CUP$parser$stack.peek();
-                   int line = symbol.left;
-                   int column = symbol.right;
-
-                   // Obtener el tipo y el temporal de la expresión
-                   Resultado resultadoE = (Resultado) e;
-                   String tipo = resultadoE.tipo;
-                   String tempE = resultadoE.temp;
-                   boolean esFlotante = tipo.equals("bromista");
-                   String tempResultado = esFlotante ? parser.newFloatTemp() : parser.newTemp();
-                   if (esFlotante) {
-                       parser.gen("neg.s " + tempResultado + ", " + tempE);
-                   } else {
-                       parser.gen("not " + tempResultado + ", " + tempE);
-                   }
-               RESULT = new Resultado(tipo, tempResultado);
+              Symbol symbol = (Symbol) CUP$parser$stack.peek();
+              int line = symbol.left;
+              int column = symbol.right;
+              // Obtener el tipo y el temporal de la expresión
+              Resultado resultadoE = (Resultado) e;
+              String tipo = resultadoE.tipo;
+              String tempE = resultadoE.temp;
+              boolean esFlotante = tipo.equals("bromista");
+              String tempResultado = esFlotante ? parser.newFloatTemp() : parser.newTemp();
+              if (esFlotante) {
+                    parser.gen("li.s $f1, 0.0");
+                    parser.gen("li.s $f2, 1.0");
+                    parser.gen("c.eq.s " + tempE + ", $f1");  // Comparar tempE con 0.0 (para !x)
+                    parser.gen("movt.s " + tempResultado + ", $f2");
+                    parser.gen("movf.s " + tempResultado + ", $f1");
+              } else {
+                    parser.gen("seq " + tempResultado + ", " + tempE + ", $zero");
+              }
+                 RESULT = new Resultado(tipo, tempResultado);
          
               CUP$parser$result = parser.getSymbolFactory().newSymbol("expresion",7, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-1)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }
