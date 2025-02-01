@@ -1,7 +1,7 @@
  rodolfo _test1_ abreregalo cierraregalo abrecuento
 
      rodolfo _valor_ entrega 7 finregalo
-     cometa _mensajeWhile_ entrega "Iteración en while dentro de if" finregalo
+     cometa _mensajeWhile_ entrega " func1: Iteración en while dentro de if" finregalo
 
      elfo abreregalo _valor_ snowball 10 cierraregalo
          abrecuento
@@ -14,7 +14,7 @@
              cierracuento
          cierracuento
      hada abrecuento
-         narra abreregalo "El valor es mayor o igual a 10, no entra al while" cierraregalo finregalo
+         narra abreregalo " func1: El valor es mayor o igual a 10, no entra al while" cierraregalo finregalo
      cierracuento
 
  envia 1 finregalo
@@ -31,10 +31,10 @@
 
              elfo abreregalo _i3_ minstix 3 cierraregalo
                  abrecuento
-                     narra abreregalo "El valor de i es menor que 3" cierraregalo finregalo
+                     narra abreregalo " func 2: El valor de i es menor que 3" cierraregalo finregalo
                  cierracuento
              hada abrecuento
-                 narra abreregalo "El valor de i es mayor o igual a 3" cierraregalo finregalo
+                 narra abreregalo " func 2: El valor de i es mayor o igual a 3" cierraregalo finregalo
              cierracuento
 
              envia finregalo
@@ -169,6 +169,9 @@
      			ultimo  sigue  # error sintactico
                      narra abreregalo _stringSwitch2_ cierraregalo finregalo
      	    cierracuento
+
+     _test1_ abreregalo cierraregalo finregalo
+     _test2_ abreregalo cierraregalo finregalo
 
   envia 1 finregalo
   cierracuento

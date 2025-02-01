@@ -11,8 +11,8 @@ Token: 35, Lexema: finregalo, Línea: 3, Columna: 32
 Token: 4, Lexema: cometa, Línea: 4, Columna: 6
 Token: 13, Lexema: _mensajeWhile_, Línea: 4, Columna: 13
 Token: 20, Lexema: entrega, Línea: 4, Columna: 28
-Token: 10, Lexema: "Iteración en while dentro de if", Línea: 4, Columna: 36
-Token: 35, Lexema: finregalo, Línea: 4, Columna: 70
+Token: 10, Lexema: " func1: Iteración en while dentro de if", Línea: 4, Columna: 36
+Token: 35, Lexema: finregalo, Línea: 4, Columna: 78
 Token: 36, Lexema: elfo, Línea: 6, Columna: 6
 Token: 21, Lexema: abreregalo, Línea: 6, Columna: 11
 Token: 13, Lexema: _valor_, Línea: 6, Columna: 22
@@ -50,9 +50,9 @@ Token: 37, Lexema: hada, Línea: 16, Columna: 6
 Token: 14, Lexema: abrecuento, Línea: 16, Columna: 11
 Token: 46, Lexema: narra, Línea: 17, Columna: 10
 Token: 21, Lexema: abreregalo, Línea: 17, Columna: 16
-Token: 10, Lexema: "El valor es mayor o igual a 10, no entra al while", Línea: 17, Columna: 27
-Token: 22, Lexema: cierraregalo, Línea: 17, Columna: 79
-Token: 35, Lexema: finregalo, Línea: 17, Columna: 92
+Token: 10, Lexema: " func1: El valor es mayor o igual a 10, no entra al while", Línea: 17, Columna: 27
+Token: 22, Lexema: cierraregalo, Línea: 17, Columna: 87
+Token: 35, Lexema: finregalo, Línea: 17, Columna: 100
 Token: 15, Lexema: cierracuento, Línea: 18, Columna: 6
 Token: 44, Lexema: envia, Línea: 20, Columna: 2
 Token: 8, Lexema: 1, Línea: 20, Columna: 8
@@ -94,17 +94,17 @@ Token: 22, Lexema: cierraregalo, Línea: 32, Columna: 45
 Token: 14, Lexema: abrecuento, Línea: 33, Columna: 18
 Token: 46, Lexema: narra, Línea: 34, Columna: 22
 Token: 21, Lexema: abreregalo, Línea: 34, Columna: 28
-Token: 10, Lexema: "El valor de i es menor que 3", Línea: 34, Columna: 39
-Token: 22, Lexema: cierraregalo, Línea: 34, Columna: 70
-Token: 35, Lexema: finregalo, Línea: 34, Columna: 83
+Token: 10, Lexema: " func 2: El valor de i es menor que 3", Línea: 34, Columna: 39
+Token: 22, Lexema: cierraregalo, Línea: 34, Columna: 79
+Token: 35, Lexema: finregalo, Línea: 34, Columna: 92
 Token: 15, Lexema: cierracuento, Línea: 35, Columna: 18
 Token: 37, Lexema: hada, Línea: 36, Columna: 14
 Token: 14, Lexema: abrecuento, Línea: 36, Columna: 19
 Token: 46, Lexema: narra, Línea: 37, Columna: 18
 Token: 21, Lexema: abreregalo, Línea: 37, Columna: 24
-Token: 10, Lexema: "El valor de i es mayor o igual a 3", Línea: 37, Columna: 35
-Token: 22, Lexema: cierraregalo, Línea: 37, Columna: 72
-Token: 35, Lexema: finregalo, Línea: 37, Columna: 85
+Token: 10, Lexema: " func 2: El valor de i es mayor o igual a 3", Línea: 37, Columna: 35
+Token: 22, Lexema: cierraregalo, Línea: 37, Columna: 81
+Token: 35, Lexema: finregalo, Línea: 37, Columna: 94
 Token: 15, Lexema: cierracuento, Línea: 38, Columna: 14
 Token: 44, Lexema: envia, Línea: 40, Columna: 14
 Token: 35, Lexema: finregalo, Línea: 40, Columna: 20
@@ -473,7 +473,15 @@ Token: 13, Lexema: _stringSwitch2_, Línea: 170, Columna: 39
 Token: 22, Lexema: cierraregalo, Línea: 170, Columna: 55
 Token: 35, Lexema: finregalo, Línea: 170, Columna: 68
 Token: 15, Lexema: cierracuento, Línea: 171, Columna: 11
-Token: 44, Lexema: envia, Línea: 173, Columna: 3
-Token: 8, Lexema: 1, Línea: 173, Columna: 9
-Token: 35, Lexema: finregalo, Línea: 173, Columna: 11
-Token: 15, Lexema: cierracuento, Línea: 174, Columna: 3
+Token: 13, Lexema: _test1_, Línea: 173, Columna: 6
+Token: 21, Lexema: abreregalo, Línea: 173, Columna: 14
+Token: 22, Lexema: cierraregalo, Línea: 173, Columna: 25
+Token: 35, Lexema: finregalo, Línea: 173, Columna: 38
+Token: 13, Lexema: _test2_, Línea: 174, Columna: 6
+Token: 21, Lexema: abreregalo, Línea: 174, Columna: 14
+Token: 22, Lexema: cierraregalo, Línea: 174, Columna: 25
+Token: 35, Lexema: finregalo, Línea: 174, Columna: 38
+Token: 44, Lexema: envia, Línea: 176, Columna: 3
+Token: 8, Lexema: 1, Línea: 176, Columna: 9
+Token: 35, Lexema: finregalo, Línea: 176, Columna: 11
+Token: 15, Lexema: cierracuento, Línea: 177, Columna: 3

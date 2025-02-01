@@ -1,9 +1,9 @@
 .data
-_string_1: .asciiz "Iteración en while dentro de if"
-_mensajeWhile_: .asciiz "Iteración en while dentro de if"
-_string_16: .asciiz "El valor es mayor o igual a 10, no entra al while"
-_string_34: .asciiz "El valor de i es menor que 3"
-_string_35: .asciiz "El valor de i es mayor o igual a 3"
+_string_1: .asciiz " func1: Iteración en while dentro de if"
+_mensajeWhile_: .asciiz " func1: Iteración en while dentro de if"
+_string_16: .asciiz " func1: El valor es mayor o igual a 10, no entra al while"
+_string_34: .asciiz " func 2: El valor de i es menor que 3"
+_string_35: .asciiz " func 2: El valor de i es mayor o igual a 3"
 _string_55: .asciiz "while iteracion "
 _string2_: .asciiz "while iteracion "
 _string_62: .asciiz "  Segundo If  "
@@ -461,8 +461,12 @@ li $a0, 10
 li $v0, 11
 syscall
 _switch_end_132:
-li $t7, 1
-move $v0, $t7
+jal _test1_
+move $t7, $v0
+jal _test2_
+move $t8, $v0
+li $t9, 1
+move $v0, $t9
 jr $ra
 
 # Fin del main (_verano_)
