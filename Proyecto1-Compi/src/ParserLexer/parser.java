@@ -3437,9 +3437,6 @@ class CUP$parser$actions {
 
                    // Guardar el valor de la expresión del switch
                    parser.tempSwitch = ((Resultado) e).temp;
-
-                   // Reiniciar contador de cases
-                   parser.caseNumber = 0;
                
               CUP$parser$result = parser.getSymbolFactory().newSymbol("switch_cabecera",49, ((java_cup.runtime.Symbol)CUP$parser$stack.elementAt(CUP$parser$top-4)), ((java_cup.runtime.Symbol)CUP$parser$stack.peek()), RESULT);
             }

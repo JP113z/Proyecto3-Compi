@@ -1485,9 +1485,6 @@ switch_cabecera ::= SWITCH PARENTESISAPERTURA expresion:e PARENTESISCIERRE corch
 
                    // Guardar el valor de la expresión del switch
                    parser.tempSwitch = ((Resultado) e).temp;
-
-                   // Reiniciar contador de cases
-                   parser.caseNumber = 0;
                :};
 
 switch_cierre ::= corcheteDerecho
