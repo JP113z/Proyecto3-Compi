@@ -1498,10 +1498,10 @@ for_stmt_aux ::= expresion:e FIN_EXPRESION
 
                         if (parser.iteradorForActual != null) {
 
-                            String tempUpdate = ((Resultado) e2).temp;
+                            String tempUpdate = (e2 != null && ((Resultado) e2).temp != null) ? ((Resultado) e2).temp : null;
 
                             // Si tempUpdate es $t0, usamos $t1. Si no, dejamos $t0.
-                            String registroCarga = tempUpdate.equals("$t0") ? "$t1" : "$t0";
+                            String registroCarga = (tempUpdate != null && tempUpdate.equals("$t0")) ? "$t1" : "$t0";
 
                             String direccionIterador = parser.getVariableAddress(parser.iteradorForActual);
 
