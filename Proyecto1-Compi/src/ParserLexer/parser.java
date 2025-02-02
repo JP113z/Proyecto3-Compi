@@ -1245,14 +1245,20 @@ public class parser extends java_cup.runtime.lr_parser {
     private int frameSize = 0;        // Tamaño actual del marco de pila
     private Map<String, Integer> variableOffset = new HashMap<>();  // Mapa para offsets fijos de variables en la pila
 
-    // Obtener un registro temporal para operaciones intermedias
+    /**
+     * Genera un nuevo registro temporal para operaciones intermedias en la generación de código.
+     * Cada vez que se llama a esta función, se devuelve un nuevo registro temporal en el formato `$tN`
+     */
     public String newTemp() {
         String temp = "$t" + (currentTemp % (maxTemp + 1));
         currentTemp++;
         return temp;
     }
 
-    // Asignar espacio en la pila para una nueva variable
+    /**
+      * Asigna espacio en la pila para una nueva variable.
+      * Esta función reserva un espacio en la pila para una variable
+      */
     public void allocateVariable(String variable) {
         if (variableOffset.containsKey(variable)) {
             System.err.println("Error interno: Variable ya está asignada en la pila.");
@@ -1264,7 +1270,11 @@ public class parser extends java_cup.runtime.lr_parser {
         gen("addi $sp, $sp, -4");  // Reservar espacio en la pila
     }
 
-    // Obtener la dirección fija en la pila para una variable
+    /**
+      * Obtiene la dirección de memoria de una variable almacenada en la pila.
+      * Esta función busca la variable en `variableOffset` para recuperar su desplazamiento
+      * dentro del marco de pila actual.
+      */
     public String getVariableAddress(String variable) {
         Integer offset = variableOffset.get(variable);
         if (offset == null) {
@@ -1275,20 +1285,27 @@ public class parser extends java_cup.runtime.lr_parser {
         return offset + "($fp)";
     }
 
-    // Cargar variable de la pila a un registro temporal
+    /**
+      * Carga una variable almacenada en la pila a un registro temporal de enteros.
+      */
     public String loadVariable(String variable) {
         String temp = newTemp();
         gen("lw " + temp + ", " + getVariableAddress(variable));
         return temp;
     }
-
+    /**
+     * Carga una variable flotante almacenada en la pila a un registro temporal de punto flotante.
+     */
     public String loadVariableFloat(String variable) {
         String temp = newFloatTemp();
         gen("lwc1 " + temp + ", " + getVariableAddress(variable));
         return temp;
     }
 
-    // Guardar valor de un registro en la pila
+    /**
+      * Guarda el valor de un registro en la pila en la dirección de la variable.
+      * Verifica que el registro sea válido antes de generar la instrucción MIPS `sw` (store word).
+      */
     public void storeVariable(String variable, String register) {
         if (register == null || !register.startsWith("$")) {
             System.err.println("Error interno: Registro inválido para la variable '" + variable + "'.");
@@ -1298,7 +1315,10 @@ public class parser extends java_cup.runtime.lr_parser {
         gen("sw " + register + ", " + getVariableAddress(variable));
     }
 
-    // Guardar valor de un registro flotante en la pila
+    /**
+    * Guarda el valor de un registro de punto flotante en la pila.
+    * Similar a `storeVariable()`, pero usa la instrucción `swc1` para almacenar valores flotantes.
+    */
     public void storeFloatVariable(String variable, String register) {
         if (register == null || !register.startsWith("$")) {
             System.err.println("Error interno: Registro inválido para la variable '" + variable + "'.");
@@ -1307,7 +1327,10 @@ public class parser extends java_cup.runtime.lr_parser {
         }
         gen("swc1 " + register + ", " + getVariableAddress(variable));  // `swc1` para flotantes
     }
-        // Obtener un registro temporal flotante para operaciones intermedias
+         /**
+           * Obtiene un registro temporal flotante para operaciones intermedias.
+           * Si aún hay registros flotantes disponibles (`$f0` a `$f31`), devuelve uno de ellos.
+           */
         public String newFloatTemp() {
             if (currentFloatTemp < 32) { // Máximo de registros flotantes es $f0 - $f31
                 return "$f" + (currentFloatTemp++ % 32);  // Ciclar dentro de los 32 registros flotantes
@@ -1318,12 +1341,17 @@ public class parser extends java_cup.runtime.lr_parser {
                 return "-" + frameSize + "($fp)";
             }
         }
-
+        /**
+         * Genera una instrucción MIPS y la almacena en la sección de código.
+         */
        public void gen(String instruction) {
               System.out.println("Generando instrucción: " + instruction);
               codMIPS.append(instruction).append("\n");
           }
-
+        /**
+         * Convierte un número flotante en su representación IEEE 754 de 32 bits en hexadecimal.
+         * Si la conversión falla debido a un formato incorrecto, se registra un error y se devuelve un valor por defecto.
+         */
         public String floatToIEEE754(String floatStr) {
             try {
                 float value = Float.parseFloat(floatStr); // Convertir a float
@@ -1336,7 +1364,9 @@ public class parser extends java_cup.runtime.lr_parser {
             }
         }
 
-
+        /**
+         * Imprime el código MIPS generado, incluyendo las secciones `.data` y `.text` si han sido utilizadas.
+         */
         public void imprimirCodigoMIPS() {
             StringBuilder codigoCompleto = new StringBuilder();
             if (dataSectionGenerated) {
@@ -1348,14 +1378,18 @@ public class parser extends java_cup.runtime.lr_parser {
             System.out.println("\n\nCÓDIGO MIPS:");
             System.out.println(codigoCompleto.toString());
         }
-
+        /**
+        * Declara el .data en la sección .data de MIPS.
+          */
         public void declararString(String id, String valor) {
             if (!dataSectionGenerated) {
                 dataSection.append(".data\n"); // Asegurarse de que la sección .data se genere al inicio
                 dataSectionGenerated = true;
             }
             dataSection.append(id + ": .asciiz \"" + valor + "\"\n");}
-
+        /**
+       * Genera la sección .text de MIPS, asegurando su existencia antes de cualquier instrucción.
+       */
        public void textSection() {
            if (!textSectionGenerated) {
                  gen(".text");
@@ -1370,7 +1404,9 @@ public class parser extends java_cup.runtime.lr_parser {
                 dataSectionGenerated = true;
            }
          }
-
+    /**
+         * Obtiene el valor de una cadena almacenada en la sección .data.
+         */
     public String obtenerValorString(String id) {
         // Buscar el string declarado en .data y devolver su valor
         String data = dataSection.toString();
@@ -1385,7 +1421,11 @@ public class parser extends java_cup.runtime.lr_parser {
         }
         return ""; // Retornar vacío si no se encuentra
     }
-
+    /**
+         * Guarda el código MIPS generado en un archivo especificado.
+         *Este método genera un archivo de texto que contiene el código MIPS ensamblador
+         * almacenado en las secciones `.data` y `.text`.
+         */
     public void guardarCodigoMIPS(String archivoSalida) {
         try (FileWriter writer = new FileWriter(archivoSalida)) {
             StringBuilder codigoCompleto = new StringBuilder();
@@ -1403,7 +1443,17 @@ public class parser extends java_cup.runtime.lr_parser {
             errorCount++;
         }
     }
-
+      /**
+         * Método: getTipo
+         * Objetivo: Obtener el tipo de un identificador en la tabla de símbolos.
+         * Entradas:
+         *   - listaTablasSimbolos: Lista de las tablas de símbolos del programa.
+         *   - id: Identificador cuyo tipo se quiere obtener.
+         *   - line: Número de línea en la que aparece el identificador.
+         *   - column: Número de columna en la que aparece el identificador.
+         * Salida:
+         *   - Devuelve una cadena con el tipo del identificador si se encuentra en la tabla de símbolos.
+         */
     public String getTipo(ArrayList<String> listaTablasSimbolos, String id, int line, int column) {
         if (listaTablasSimbolos == null) {
             System.err.println("Error semántico en línea " + (line + 1) + ", columna " + (column + 1) +
