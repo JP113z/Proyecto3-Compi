@@ -3,11 +3,7 @@ import ParserLexer.BasicLexerCupV;
 import java_cup.runtime.Symbol;
 import jflex.exceptions.SilentExit;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.FileWriter;
+import java.io.*;
 import java.util.Scanner;
 
 
@@ -134,16 +130,15 @@ public class MainJFlexCup {
 
             myParser.verificarMain();
             if (myParser.hasErrors()) {
+                myParser.imprimirTablaSimbolos();
                 System.out.println("\nEl archivo fuente NO puede generarse por la gramatica debido a errores.");
             } else {
+                myParser.imprimirTablaSimbolos();
                 System.out.println("\nEl archivo fuente SI puede generarse por la gramatica.");
+                String nombreAsm = obtenerNombreSinExtension(rutaParsear) + ".asm";
+                myParser.guardarCodigoMIPS(nombreAsm);
+                myParser.imprimirCodigoMIPS();
             }
-
-          //  String nombreAsm = pedirNombreArchivoMips();
-
-            myParser.imprimirTablaSimbolos();
-            myParser.guardarCodigoMIPS("asm.asm");
-            myParser.imprimirCodigoMIPS();
 
             //System.out.println("\nÁrbol sintáctico generado:");
            //myParser.getArbol().imprimirArbol();
@@ -171,32 +166,17 @@ public class MainJFlexCup {
         }
     }
 
-    public static String pedirNombreArchivoMips() {
-        String rutaCompleta;
-        Scanner scanner = new Scanner(System.in);
+    public static String obtenerNombreSinExtension(String rutaCompleta) {
+        File archivo = new File(rutaCompleta);
+        String nombreArchivo = archivo.getName(); // Obtiene "archivo.txt"
+        int puntoIndex = nombreArchivo.lastIndexOf(".");
 
-        while (true) {
-            try {
-                System.out.print("Ingrese el nombre del archivo para guardar el código MIPS (sin extensión): ");
-                rutaCompleta = scanner.nextLine();
-
-                // Validar que el nombre no esté vacío y no contenga caracteres inválidos
-                if (rutaCompleta.isEmpty()) {
-                    System.out.println("El nombre del archivo no puede estar vacío. Inténtelo nuevamente.");
-                } else if (rutaCompleta.matches(".*[<>:\"/\\\\|?*].*")) { // Validar caracteres inválidos
-                    System.out.println("El nombre del archivo contiene caracteres inválidos. Inténtelo nuevamente.");
-                } else {
-                    System.out.println("Nombre de archivo válido. Generando archivo...");
-                    break;
-                }
-            } catch (Exception e) {
-                System.err.println("Error al leer la entrada. Inténtelo nuevamente.");
-                scanner.nextLine(); // Limpiar el buffer del scanner en caso de error
-            }
+        // Si hay un punto en el nombre, corta hasta antes del punto
+        if (puntoIndex > 0) {
+            return nombreArchivo.substring(0, puntoIndex);
         }
-        return rutaCompleta + ".asm"; // Agregar extensión automáticamente
+
+        return nombreArchivo; // Si no tiene punto, devuelve el nombre completo
     }
-
-
 }
 
