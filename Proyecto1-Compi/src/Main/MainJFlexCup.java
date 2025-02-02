@@ -166,6 +166,16 @@ public class MainJFlexCup {
         }
     }
 
+    /**
+     * Método: obtenerNombreSinExtension
+     * Objetivo:
+     * Extraer el nombre de un archivo sin su extensión a partir de una ruta completa.
+     * Permite obtener un identificador basado en el nombre del archivo sin necesidad de procesar manualmente la extensión.
+     * Entrada:
+     *   - rutaCompleta: String que representa la ruta completa del archivo, incluyendo su nombre y extensión.
+     * Salida:
+     *   - Devuelve un String con el nombre del archivo sin su extensión.
+     *   - Si el archivo no tiene extensión, devuelve el nombre completo.*/
     public static String obtenerNombreSinExtension(String rutaCompleta) {
         File archivo = new File(rutaCompleta);
         String nombreArchivo = archivo.getName(); // Obtiene "archivo.txt"

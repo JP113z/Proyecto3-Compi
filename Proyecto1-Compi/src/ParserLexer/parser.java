@@ -1246,7 +1246,8 @@ public class parser extends java_cup.runtime.lr_parser {
     private Map<String, Integer> variableOffset = new HashMap<>();  // Mapa para offsets fijos de variables en la pila
 
     /**
-     * Genera un nuevo registro temporal para operaciones intermedias en la generación de código.
+    *Metodo: NewTemp
+     * Objetivo: Generar un nuevo registro temporal para operaciones intermedias en la generación de código.
      * Cada vez que se llama a esta función, se devuelve un nuevo registro temporal en el formato `$tN`
      */
     public String newTemp() {
@@ -1256,8 +1257,14 @@ public class parser extends java_cup.runtime.lr_parser {
     }
 
     /**
-      * Asigna espacio en la pila para una nueva variable.
-      * Esta función reserva un espacio en la pila para una variable
+      * metodo: allocateVariable
+      *Asigna espacio en la pila para una nueva variable.
+      *Objetivo: Esta función reserva un espacio en la pila para una variable
+      * Entrada:
+       *   - variable: String que representa el nombre de la variable que se asignará en la pila.
+       * Salida:
+       *   - No retorna ningún valor (void).
+       *   - Si la variable ya estaba asignada en la pila, se imprime un mensaje de error y se incrementa `errorCount`.
       */
     public void allocateVariable(String variable) {
         if (variableOffset.containsKey(variable)) {
@@ -1271,9 +1278,16 @@ public class parser extends java_cup.runtime.lr_parser {
     }
 
     /**
-      * Obtiene la dirección de memoria de una variable almacenada en la pila.
-      * Esta función busca la variable en `variableOffset` para recuperar su desplazamiento
+      * Metodo: getVariableAddress
+      *Obtiene la dirección de memoria de una variable almacenada en la pila.
+      * Objetivo: Esta función busca la variable en `variableOffset` para recuperar su desplazamiento
       * dentro del marco de pila actual.
+      * Entrada:
+       *   - variable: String que representa el nombre de la variable cuya dirección se desea obtener.
+       * Salida:
+       *   - Retorna un `String` con la dirección de la variable en la pila en formato MIPS.
+       *   - Si la variable existe en `variableOffset`, devuelve su desplazamiento relativo al puntero de marco (`$fp`).
+       *   - Si la variable no existe, imprime un mensaje de error, incrementa `errorCount` y devuelve `"0($sp)"`.
       */
     public String getVariableAddress(String variable) {
         Integer offset = variableOffset.get(variable);
@@ -1286,7 +1300,13 @@ public class parser extends java_cup.runtime.lr_parser {
     }
 
     /**
-      * Carga una variable almacenada en la pila a un registro temporal de enteros.
+      *Metodo: loadVariable
+      *Objetivo:  Cargar una variable almacenada en la pila a un registro temporal de enteros.
+      * Entrada:
+       *   - variable: String que representa el nombre de la variable a cargar desde la pila.
+       * Salida:
+       *   - Retorna un `String` con el nombre del registro temporal en el que se ha cargado el valor de la variable.
+       *   - También genera la instrucción `lw` en código MIPS para cargar el valor desde la pila al registro.
       */
     public String loadVariable(String variable) {
         String temp = newTemp();
@@ -1294,7 +1314,13 @@ public class parser extends java_cup.runtime.lr_parser {
         return temp;
     }
     /**
-     * Carga una variable flotante almacenada en la pila a un registro temporal de punto flotante.
+     * Metodo:loadVariableFloat
+     *Objetivo: Carga una variable flotante almacenada en la pila a un registro temporal de punto flotante.
+      * Entrada:
+      *   - variable: String que representa el nombre de la variable flotante a cargar desde la pila
+      * Salida:
+      *   - Retorna un `String` con el nombre del registro flotante (`$fX`) en el que se ha cargado el valor de la variable.
+      *   - También genera la instrucción `lwc1` en código MIPS para cargar el valor desde la pila al registro de punto flotante.
      */
     public String loadVariableFloat(String variable) {
         String temp = newFloatTemp();
@@ -1303,7 +1329,8 @@ public class parser extends java_cup.runtime.lr_parser {
     }
 
     /**
-      * Guarda el valor de un registro en la pila en la dirección de la variable.
+      * Metodo: storeVariable
+      *Objetivo Guardar el valor de un registro en la pila en la dirección de la variable.
       * Verifica que el registro sea válido antes de generar la instrucción MIPS `sw` (store word).
       */
     public void storeVariable(String variable, String register) {
@@ -1316,7 +1343,8 @@ public class parser extends java_cup.runtime.lr_parser {
     }
 
     /**
-    * Guarda el valor de un registro de punto flotante en la pila.
+    *Metodo: storeFloatVariable
+    * Objetivo: Guardar el valor de un registro de punto flotante en la pila.
     * Similar a `storeVariable()`, pero usa la instrucción `swc1` para almacenar valores flotantes.
     */
     public void storeFloatVariable(String variable, String register) {
@@ -1328,7 +1356,8 @@ public class parser extends java_cup.runtime.lr_parser {
         gen("swc1 " + register + ", " + getVariableAddress(variable));  // `swc1` para flotantes
     }
          /**
-           * Obtiene un registro temporal flotante para operaciones intermedias.
+            *Metodo:newFloatTemp
+           * Objetivo: Obtiener un registro temporal flotante para operaciones intermedias.
            * Si aún hay registros flotantes disponibles (`$f0` a `$f31`), devuelve uno de ellos.
            */
         public String newFloatTemp() {
@@ -1342,15 +1371,22 @@ public class parser extends java_cup.runtime.lr_parser {
             }
         }
         /**
-         * Genera una instrucción MIPS y la almacena en la sección de código.
+         * Metodo:gen
+         *Objetivo: Generar una instrucción MIPS y la almacena en la sección de código.
          */
        public void gen(String instruction) {
               System.out.println("Generando instrucción: " + instruction);
               codMIPS.append(instruction).append("\n");
           }
         /**
-         * Convierte un número flotante en su representación IEEE 754 de 32 bits en hexadecimal.
+         * Metodo: floatToIEEE754
+         *Objetivo: Conviertir un número flotante en su representación IEEE 754 de 32 bits en hexadecimal.
          * Si la conversión falla debido a un formato incorrecto, se registra un error y se devuelve un valor por defecto.
+         * Entrada:
+          *   - `floatStr`: Cadena de texto (`String`) que representa un número flotante en formato decimal.
+          * Salida:
+          *   - `String`: Representación en hexadecimal del número en formato IEEE 754 de 32 bits.
+          *   - En caso de error, retorna `"0x0000"` y se incrementa `errorCount`.
          */
         public String floatToIEEE754(String floatStr) {
             try {
@@ -1365,7 +1401,8 @@ public class parser extends java_cup.runtime.lr_parser {
         }
 
         /**
-         * Imprime el código MIPS generado, incluyendo las secciones `.data` y `.text` si han sido utilizadas.
+         * Metodo:imprimirCodigoMIPS
+         *Objetivo: Imprimir el código MIPS generado, incluyendo las secciones `.data` y `.text` si han sido utilizadas.
          */
         public void imprimirCodigoMIPS() {
             StringBuilder codigoCompleto = new StringBuilder();
@@ -1379,7 +1416,8 @@ public class parser extends java_cup.runtime.lr_parser {
             System.out.println(codigoCompleto.toString());
         }
         /**
-        * Declara el .data en la sección .data de MIPS.
+        * Metodo:declararString
+        *Objetivo: Declarar el .data en la sección .data de MIPS.
           */
         public void declararString(String id, String valor) {
             if (!dataSectionGenerated) {
@@ -1388,7 +1426,8 @@ public class parser extends java_cup.runtime.lr_parser {
             }
             dataSection.append(id + ": .asciiz \"" + valor + "\"\n");}
         /**
-       * Genera la sección .text de MIPS, asegurando su existencia antes de cualquier instrucción.
+       * Metodo: textSection
+       * Objetivo: Generar la sección .text de MIPS, asegurando su existencia antes de cualquier instrucción.
        */
        public void textSection() {
            if (!textSectionGenerated) {
@@ -1405,7 +1444,8 @@ public class parser extends java_cup.runtime.lr_parser {
            }
          }
     /**
-         * Obtiene el valor de una cadena almacenada en la sección .data.
+         * Metodo:obtenerValorString
+         *Obtener el valor de una cadena almacenada en la sección .data.
          */
     public String obtenerValorString(String id) {
         // Buscar el string declarado en .data y devolver su valor
@@ -1422,9 +1462,15 @@ public class parser extends java_cup.runtime.lr_parser {
         return ""; // Retornar vacío si no se encuentra
     }
     /**
-         * Guarda el código MIPS generado en un archivo especificado.
+         * Metodo:guardarCodigoMIPS
+         *Objetivo: Guardar el código MIPS generado en un archivo especificado.
          *Este método genera un archivo de texto que contiene el código MIPS ensamblador
          * almacenado en las secciones `.data` y `.text`.
+         * Entrada:
+          *   - `archivoSalida`: Nombre o ruta del archivo de salida donde se guardará el código MIPS generado.
+          * Salida:
+          *   - Se crea un archivo en la ruta especificada con el contenido del código ensamblador.
+          *   - En caso de error, se imprime un mensaje en consola y se incrementa `errorCount`.
          */
     public void guardarCodigoMIPS(String archivoSalida) {
         try (FileWriter writer = new FileWriter(archivoSalida)) {
